@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý cân nặng{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .weight-wrap {
+        max-width: 1320px;
+    }
+
+    /* Fix bảng lịch sử cân nặng trong dark mode */
+    html[data-theme="dark"] .history-table,
+    html[data-theme="dark"] .history-table tbody,
+    html[data-theme="dark"] .history-table tr,
+    html[data-theme="dark"] .history-table td,
+    html[data-theme="dark"] .history-table th {
+        color: #e5e7eb !important;
+    }
+
+    html[data-theme="dark"] .history-table tbody td {
+        color: #e5e7eb !important;
+        font-weight: 500;
+        background: transparent !important;
+    }
+
+    html[data-theme="dark"] .history-table tbody tr {
+        background: transparent !important;
+    }
+
+    html[data-theme="dark"] .history-table thead th {
+        color: #ffffff !important;
+        background: #243041 !important;
+        border-color: #334155 !important;
+    }
+
+    html[data-theme="dark"] .history-table.table-hover tbody tr:hover td {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+    }
+
+    html[data-theme="dark"] .history-table td strong {
+        color: #f8fafc !important;
+    }
+
+    html[data-theme="dark"] .history-table .btn-outline-danger {
+        color: #ff6b81 !important;
+        border-color: #ff6b81 !important;
+        background: transparent !important;
+    }
+
+    html[data-theme="dark"] .history-table .btn-outline-danger:hover {
+        color: #ffffff !important;
+        background: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="weight-wrap">
+
+    {% if records and records|length > 0 %}
+        {% set first_weight = records[0].weight %}
+        {% set current_weight = records[-1].weight %}
+        {% set diff = (current_weight - first_weight)|round(1) %}
+        {% set target_weight = user.target_weight %}
+
+        {% set progress_percent = 0 %}
+        {% set goal_type = "unknown" %}
+        {% set progress_label = "Chưa xác định mục tiêu" %}
+        {% set progress_color = "secondary" %}
+
+        
+
+        {% if target_weight %}
+            {% if target_weight < first_weight %}
+                {% set goal_type = "lose" %}
+                {% set total_needed = first_weight - target_weight %}
+                {% set total_done = first_weight - current_weight %}
+                {% if total_needed > 0 %}
+                    {% set progress_percent = (total_done / total_needed) * 100 %}
+                {% endif %}
+                {% set progress_label = "Tiến độ giảm cân" %}
+                {% set progress_color = "success" %}
+            {% elif target_weight > first_weight %}
+                {% set goal_type = "gain" %}
+                {% set total_needed = target_weight - first_weight %}
+                {% set total_done = current_weight - first_weight %}
+                {% if total_needed > 0 %}
+                    {% set progress_percent = (total_done / total_needed) * 100 %}
+                {% endif %}
+                {% set progress_label = "Tiến độ tăng cân" %}
+                {% set progress_color = "primary" %}
+            {% else %}
+                {% set goal_type = "maintain" %}
+                {% set progress_percent = 100 %}
+                {% set progress_label = "Trạng thái duy trì cân nặng" %}
+                {% set progress_color = "info" %}
+            {% endif %}
+        {% endif %}
+
+        {% if progress_percent < 0 %}
+            {% set progress_percent = 0 %}
+        {% endif %}
+        {% if progress_percent > 100 %}
+            {% set progress_percent = 100 %}
+        {% endif %}
+    {% endif %}
+
+    <div class="page-header header-green mb-3">
+        <div class="row align-items-center g-2">
+            <div class="col-md-8">
+                <h1>Quản lý cân nặng</h1>
+                <p>Theo dõi, cập nhật và xem tiến trình thay đổi cân nặng theo thời gian.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="status-chip">Người dùng: {{ user.full_name }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="card section-card h-100">
+                <div class="card-body">
+                    <div class="section-title">Nhập cân nặng mới</div>
+
+                    <form action="/weight" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Ngày ghi nhận</label>
+                            <input type="date" name="record_date" id="recordDate" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Cân nặng (kg)</label>
+                            <input type="number" step="0.1" name="weight" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Ghi chú</label>
+                            <input type="text" name="note" class="form-control" placeholder="Ví dụ: sau tập gym, buổi sáng...">
+                        </div>
+
+                        <div class="form-note mb-3">
+                            Bản ghi này sẽ được thêm vào lịch sử để phục vụ biểu đồ và dự đoán.
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 btn-soft">Lưu cân nặng</button>
+                    </form>
+
+                    {% if records and records|length > 0 %}
+                    <div class="summary-box mt-3">
+                        <div class="summary-title">Tóm tắt nhanh</div>
+                        <div class="summary-value">
+                            {% if diff < 0 %}
+                                Bạn đã giảm {{ (diff * -1)|round(1) }} kg so với lúc bắt đầu.
+                            {% elif diff > 0 %}
+                                Bạn đã tăng {{ diff|round(1) }} kg so với lúc bắt đầu.
+                            {% else %}
+                                Cân nặng của bạn hiện đang ổn định.
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card section-card">
+                <div class="card-body">
+                    <div class="section-title">Lịch sử cân nặng</div>
+
+                    {% if records and records|length > 0 %}
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-top">
+                                    <div class="metric-icon">🏁</div>
+                                    <div class="metric-label">Cân nặng đầu tiên</div>
+                                </div>
+                                <div class="metric-value">{{ first_weight }} kg</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-top">
+                                    <div class="metric-icon">⚖️</div>
+                                    <div class="metric-label">Cân nặng hiện tại</div>
+                                </div>
+                                <div class="metric-value">{{ current_weight }} kg</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-top">
+                                    <div class="metric-icon">📉</div>
+                                    <div class="metric-label">Chênh lệch</div>
+                                </div>
+                                <div class="metric-value {% if diff < 0 %}text-good{% elif diff > 0 %}text-bad{% else %}text-neutral{% endif %}">
+                                    {{ diff }} kg
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-top">
+                                    <div class="metric-icon">📝</div>
+                                    <div class="metric-label">Số lần ghi nhận</div>
+                                </div>
+                                <div class="metric-value">{{ records|length }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if user.target_weight %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small-muted">{{ progress_label }}</span>
+                            {% if goal_type != "maintain" %}
+                            <span class="small-muted">{{ progress_percent|round(0) }}%</span>
+                            {% endif %}
+                        </div>
+
+                        {% if goal_type == "maintain" %}
+                            <div class="alert alert-info py-2 mb-2">
+                                Mục tiêu hiện tại là duy trì cân nặng quanh mức <strong>{{ target_weight }} kg</strong>.
+                            </div>
+                        {% else %}
+                            <div class="progress">
+                                <div
+                                    class="progress-bar bg-{{ progress_color }}"
+                                    role="progressbar"
+                                    style="width: {{ progress_percent }}%;"
+                                    aria-valuenow="{{ progress_percent }}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100">
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="small-muted mt-1">
+                            Mục tiêu: {{ user.target_weight }} kg
+                            {% if goal_type == "lose" %}
+                                · Đang theo hướng giảm cân
+                            {% elif goal_type == "gain" %}
+                                · Đang theo hướng tăng cân
+                            {% elif goal_type == "maintain" %}
+                                · Trạng thái duy trì
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-hover align-middle history-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">STT</th>
+                                    <th style="width: 140px;">Ngày</th>
+                                    <th style="width: 150px;">Cân nặng</th>
+                                    <th>Ghi chú</th>
+                                    <th style="width: 90px;">Xóa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in records %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ item.record_date.strftime('%d/%m/%Y') }}</td>
+                                    <td><strong>{{ item.weight }} kg</strong></td>
+                                    <td>{{ item.note or '—' }}</td>
+                                    <td>
+                                        <form action="/weight/delete/{{ item.id }}" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa bản ghi này?');">
+                                            <button type="submit" class="btn btn-outline-danger delete-btn">Xóa</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                        <div class="section-title mb-0">Biểu đồ tiến trình cân nặng</div>
+                        <div class="small-muted">Dữ liệu hiển thị từ quá khứ đến hiện tại</div>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas id="weightChart"></canvas>
+                    </div>
+
+                    {% else %}
+                    <div class="alert alert-secondary mb-0">
+                        Chưa có dữ liệu cân nặng. Hãy nhập bản ghi đầu tiên để bắt đầu theo dõi.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if records and records|length > 0 %}
+<script>
+    const labels = [
+        {% for r in records %}
+            "{{ r.record_date.strftime('%d/%m/%Y') }}",
+        {% endfor %}
+    ];
+
+    const weights = [
+        {% for r in records %}
+            {{ r.weight }},
+        {% endfor %}
+    ];
+
+    const firstWeight = {{ records[0].weight }};
+    const currentWeight = {{ records[-1].weight }};
+
+    const lineColor = currentWeight <= firstWeight ? '#198754' : '#dc3545';
+    const bgColor = currentWeight <= firstWeight ? 'rgba(25, 135, 84, 0.12)' : 'rgba(220, 53, 69, 0.12)';
+
+    const ctx = document.getElementById('weightChart');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Cân nặng (kg)',
+                data: weights,
+                borderColor: lineColor,
+                backgroundColor: bgColor,
+                borderWidth: 3,
+                tension: 0.35,
+                fill: true,
+                pointRadius: 4,
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+    
+document.addEventListener("DOMContentLoaded", function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("recordDate").value = today;
+});
+document.addEventListener("DOMContentLoaded", function() {
+    const today = new Date().toISOString().split('T')[0];
+    const input = document.getElementById("recordDate");
+    input.value = today;
+    input.max = today;
+});
+</script>
+{% endif %}
+{% endblock %}

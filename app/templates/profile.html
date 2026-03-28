@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}Cập nhật thông tin cá nhân{% endblock %}
+
+{% block head_extra %}
+<style>
+    .profile-wrap {
+        max-width: 1180px;
+    }
+
+    .profile-mini-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .profile-tip-card {
+        border-radius: 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        padding: 14px;
+        height: 100%;
+    }
+
+    .profile-tip-icon {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+
+    .profile-tip-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: var(--text-main);
+    }
+
+    .profile-tip-text {
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+
+    .profile-check-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .profile-check-item {
+        border-radius: 12px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        padding: 12px;
+    }
+
+    .profile-check-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+
+    .profile-check-icon {
+        font-size: 16px;
+    }
+
+    .profile-check-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .profile-check-status {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 0;
+    }
+
+    .profile-progress-box {
+        border-radius: 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        padding: 14px;
+    }
+
+    .profile-progress-number {
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1;
+    }
+
+    .profile-progress-sub {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    @media (max-width: 991px) {
+        .profile-mini-grid,
+        .profile-check-list {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    html[data-theme="dark"] .profile-wrap form label,
+    html[data-theme="dark"] .profile-wrap .form-label {
+        color: #e5e7eb !important;
+    }
+
+    html[data-theme="dark"] .profile-wrap .form-text {
+        color: #cbd5e1 !important;
+    }
+
+    html[data-theme="dark"] .profile-wrap .alert-info {
+        background: rgba(13, 202, 240, 0.18) !important;
+        color: #e5e7eb !important;
+        border-color: rgba(13, 202, 240, 0.25) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-wrap">
+
+    {% set profile_score = 0 %}
+    {% if user.age %}{% set profile_score = profile_score + 20 %}{% endif %}
+    {% if user.gender %}{% set profile_score = profile_score + 20 %}{% endif %}
+    {% if user.height %}{% set profile_score = profile_score + 20 %}{% endif %}
+    {% if user.target_weight %}{% set profile_score = profile_score + 20 %}{% endif %}
+    {% if user.activity_level %}{% set profile_score = profile_score + 20 %}{% endif %}
+
+    <div class="page-header header-green mb-3">
+        <div class="row align-items-center g-2">
+            <div class="col-md-8">
+                <h1>Cập nhật thông tin cá nhân</h1>
+                <p>Điền thông tin cơ bản để hệ thống phân tích sức khỏe và dự đoán chính xác hơn.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="status-chip">Tài khoản: {{ user.full_name }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card section-card mb-3">
+                <div class="card-body">
+                    <div class="section-title">Biểu mẫu thông tin</div>
+
+                    <form action="/profile" method="post">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Tuổi</label>
+                                <input type="number" name="age" class="form-control" value="{{ user.age or '' }}" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Giới tính</label>
+                                <select name="gender" class="form-select" required>
+                                    <option value="">-- Chọn giới tính --</option>
+                                    <option value="Nam" {% if user.gender == 'Nam' %}selected{% endif %}>Nam</option>
+                                    <option value="Nữ" {% if user.gender == 'Nữ' %}selected{% endif %}>Nữ</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Chiều cao (cm)</label>
+                                <input type="number" step="0.1" name="height" class="form-control" value="{{ user.height or '' }}" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Cân nặng mục tiêu (kg)</label>
+                                <input type="number" step="0.1" name="target_weight" class="form-control" value="{{ user.target_weight or '' }}" required>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Mức độ vận động</label>
+                                <select name="activity_level" class="form-select" required>
+                                    <option value="">-- Chọn mức độ vận động --</option>
+                                    <option value="Ít vận động" {% if user.activity_level == 'Ít vận động' %}selected{% endif %}>Ít vận động</option>
+                                    <option value="Vận động nhẹ" {% if user.activity_level == 'Vận động nhẹ' %}selected{% endif %}>Vận động nhẹ</option>
+                                    <option value="Vận động vừa" {% if user.activity_level == 'Vận động vừa' %}selected{% endif %}>Vận động vừa</option>
+                                    <option value="Vận động nhiều" {% if user.activity_level == 'Vận động nhiều' %}selected{% endif %}>Vận động nhiều</option>
+                                </select>
+                            </div>
+
+                            {% if allow_current_weight_input %}
+                            <div class="col-12">
+                                <label class="form-label">Cân nặng hiện tại (kg)</label>
+                                <input type="number" step="0.1" name="current_weight" class="form-control" required>
+                                <div class="form-text text-warning hint-box">
+                                    Bạn chỉ được nhập cân nặng hiện tại một lần đầu tiên. Hệ thống sẽ tự lưu với ngày hôm nay.
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="col-12">
+                                <div class="alert alert-info hint-box mb-0">
+                                    Cân nặng ban đầu đã được khởi tạo. Nếu muốn cập nhật cân nặng mới, vui lòng vào mục
+                                    <strong>Lịch sử cân nặng</strong>.
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success btn-save w-100">
+                                    Lưu thông tin
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card section-card">
+                <div class="card-body">
+                    <div class="section-title">Tiến độ hoàn thiện hồ sơ</div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="profile-progress-box h-100">
+                                <div class="profile-progress-number">{{ profile_score }}%</div>
+                                <div class="profile-progress-sub mt-2">Mức độ hoàn thiện hồ sơ</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="profile-progress-box h-100">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="small-muted">Tiến độ</span>
+                                    <span class="small-muted">{{ profile_score }}%</span>
+                                </div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-success" style="width: {{ profile_score }}%"></div>
+                                </div>
+                                <div class="small-muted">
+                                    {% if profile_score == 100 %}
+                                        Hồ sơ của bạn đã đầy đủ, hệ thống có thể phân tích tốt hơn.
+                                    {% elif profile_score >= 60 %}
+                                        Hồ sơ của bạn đã khá đầy đủ, chỉ cần duy trì cập nhật đúng thông tin.
+                                    {% else %}
+                                        Bạn nên hoàn thiện thêm hồ sơ để hệ thống đưa ra kết quả chính xác hơn.
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-check-list mb-3">
+                        <div class="profile-check-item">
+                            <div class="profile-check-top">
+                                <div class="profile-check-icon">{% if user.age %}✅{% else %}⚪{% endif %}</div>
+                                <div class="profile-check-title">Tuổi</div>
+                            </div>
+                            <p class="profile-check-status">{% if user.age %}Đã cập nhật{% else %}Chưa cập nhật{% endif %}</p>
+                        </div>
+
+                        <div class="profile-check-item">
+                            <div class="profile-check-top">
+                                <div class="profile-check-icon">{% if user.gender %}✅{% else %}⚪{% endif %}</div>
+                                <div class="profile-check-title">Giới tính</div>
+                            </div>
+                            <p class="profile-check-status">{% if user.gender %}Đã cập nhật{% else %}Chưa cập nhật{% endif %}</p>
+                        </div>
+
+                        <div class="profile-check-item">
+                            <div class="profile-check-top">
+                                <div class="profile-check-icon">{% if user.height %}✅{% else %}⚪{% endif %}</div>
+                                <div class="profile-check-title">Chiều cao</div>
+                            </div>
+                            <p class="profile-check-status">{% if user.height %}Đã cập nhật{% else %}Chưa cập nhật{% endif %}</p>
+                        </div>
+
+                        <div class="profile-check-item">
+                            <div class="profile-check-top">
+                                <div class="profile-check-icon">{% if user.target_weight %}✅{% else %}⚪{% endif %}</div>
+                                <div class="profile-check-title">Cân nặng mục tiêu</div>
+                            </div>
+                            <p class="profile-check-status">{% if user.target_weight %}Đã cập nhật{% else %}Chưa cập nhật{% endif %}</p>
+                        </div>
+
+                        <div class="profile-check-item">
+                            <div class="profile-check-top">
+                                <div class="profile-check-icon">{% if user.activity_level %}✅{% else %}⚪{% endif %}</div>
+                                <div class="profile-check-title">Mức độ vận động</div>
+                            </div>
+                            <p class="profile-check-status">{% if user.activity_level %}Đã cập nhật{% else %}Chưa cập nhật{% endif %}</p>
+                        </div>
+
+                        <div class="profile-check-item">
+                            <div class="profile-check-top">
+                                <div class="profile-check-icon">{% if not allow_current_weight_input %}✅{% else %}⚪{% endif %}</div>
+                                <div class="profile-check-title">Cân nặng ban đầu</div>
+                            </div>
+                            <p class="profile-check-status">{% if not allow_current_weight_input %}Đã khởi tạo{% else %}Chưa nhập lần đầu{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-mini-grid">
+                        <div class="profile-tip-card">
+                            <div class="profile-tip-icon">📊</div>
+                            <div class="profile-tip-title">Phân tích chính xác hơn</div>
+                            <p class="profile-tip-text">
+                                Tuổi, chiều cao, mức độ vận động và mục tiêu cân nặng giúp hệ thống tính BMI, BMR và TDEE sát thực tế hơn.
+                            </p>
+                        </div>
+
+                        <div class="profile-tip-card">
+                            <div class="profile-tip-icon">🎯</div>
+                            <div class="profile-tip-title">Bám sát mục tiêu</div>
+                            <p class="profile-tip-text">
+                                Khi hồ sơ đầy đủ, hệ thống có thể đánh giá bạn đang theo hướng giảm cân, tăng cân hay duy trì.
+                            </p>
+                        </div>
+
+                        <div class="profile-tip-card">
+                            <div class="profile-tip-icon">🤖</div>
+                            <div class="profile-tip-title">Hỗ trợ dự đoán tốt hơn</div>
+                            <p class="profile-tip-text">
+                                Dữ liệu hồ sơ kết hợp với lịch sử cân nặng sẽ giúp phần dự đoán và phân tích sức khỏe hữu ích hơn.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="summary-box mt-3 mb-0">
+                        <div class="summary-title">Mẹo sử dụng</div>
+                        <div class="summary-value">
+                            Sau khi hoàn thiện hồ sơ, bạn nên cập nhật cân nặng định kỳ ở mục <strong>Cân nặng</strong> để hệ thống theo dõi tiến trình ổn định hơn.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card section-card mb-3">
+                <div class="card-body">
+                    <div class="section-title">Thông tin tài khoản</div>
+
+                    <div class="profile-info-card mb-3">
+                        <div class="info-label">Họ và tên</div>
+                        <div class="info-value">{{ user.full_name }}</div>
+                    </div>
+
+                    <div class="profile-info-card mb-3">
+                        <div class="info-label">Email</div>
+                        <div class="info-value">{{ user.email }}</div>
+                    </div>
+
+                    <div class="profile-info-card">
+                        <div class="info-label">Trạng thái hồ sơ</div>
+                        <div class="info-value">
+                            {% if user.age and user.gender and user.height and user.target_weight and user.activity_level %}
+                                <span class="badge text-bg-success">Đã hoàn thiện</span>
+                            {% else %}
+                                <span class="badge text-bg-warning">Chưa đầy đủ</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card section-card">
+                <div class="card-body">
+                    <div class="section-title">Lưu ý</div>
+
+                    <div class="summary-box">
+                        <div class="summary-title">Thông tin quan trọng</div>
+                        <div class="summary-value">
+                            Hồ sơ càng đầy đủ thì hệ thống càng đưa ra phân tích sức khỏe và dự đoán chính xác hơn.
+                        </div>
+                    </div>
+
+                    <div class="summary-box">
+                        <div class="summary-title">Cân nặng ban đầu</div>
+                        <div class="summary-value">
+                            Sau khi nhập lần đầu, bạn hãy cập nhật cân nặng ở mục <strong>Cân nặng</strong> thay vì sửa tại hồ sơ.
+                        </div>
+                    </div>
+
+                    <div class="quote-box">
+                        <div class="summary-title">Gợi ý</div>
+                        <div class="summary-value">
+                            Hãy giữ hồ sơ rõ ràng và cập nhật đúng để hệ thống hoạt động giống một trợ lý sức khỏe cá nhân.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

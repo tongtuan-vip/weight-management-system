@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block title %}Dự đoán cân nặng{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .predict-wrap {
+        max-width: 1320px;
+    }
+
+    .predict-mini-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .predict-tip-card {
+        border-radius: 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        padding: 14px;
+        height: 100%;
+    }
+
+    .predict-tip-icon {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+
+    .predict-tip-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: var(--text-main);
+    }
+
+    .predict-tip-text {
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+
+    .predict-confidence-box {
+        border-radius: 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        padding: 14px;
+    }
+
+    .predict-confidence-number {
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1;
+    }
+
+    .predict-confidence-sub {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .chart-box {
+        min-height: 300px;
+    }
+
+    @media (max-width: 991px) {
+        .predict-mini-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="predict-wrap">
+
+    {% if predicted_7 is not none and predicted_30 is not none and weights and weights|length > 0 %}
+        {% set current_weight = weights[-1] %}
+        {% set diff_7 = (predicted_7 - current_weight)|round(1) %}
+        {% set diff_30 = (predicted_30 - current_weight)|round(1) %}
+
+        {% if diff_7 < 0 %}
+            {% set trend_7_class = "trend-good" %}
+            {% set trend_7_text = "Xu hướng giảm" %}
+        {% elif diff_7 > 0 %}
+            {% set trend_7_class = "trend-bad" %}
+            {% set trend_7_text = "Xu hướng tăng" %}
+        {% else %}
+            {% set trend_7_class = "trend-neutral" %}
+            {% set trend_7_text = "Ổn định" %}
+        {% endif %}
+
+        {% if diff_30 < 0 %}
+            {% set trend_30_class = "trend-good" %}
+            {% set trend_30_text = "Xu hướng giảm" %}
+        {% elif diff_30 > 0 %}
+            {% set trend_30_class = "trend-bad" %}
+            {% set trend_30_text = "Xu hướng tăng" %}
+        {% else %}
+            {% set trend_30_class = "trend-neutral" %}
+            {% set trend_30_text = "Ổn định" %}
+        {% endif %}
+
+        {% set record_count = weights|length %}
+        {% if record_count >= 8 %}
+            {% set confidence = 90 %}
+            {% set confidence_text = "Độ tin cậy khá cao vì bạn đã có nhiều bản ghi cân nặng." %}
+        {% elif record_count >= 5 %}
+            {% set confidence = 75 %}
+            {% set confidence_text = "Độ tin cậy ở mức tốt, nhưng bạn nên cập nhật thêm dữ liệu định kỳ." %}
+        {% elif record_count >= 3 %}
+            {% set confidence = 60 %}
+            {% set confidence_text = "Dự đoán mang tính tham khảo, cần thêm dữ liệu để ổn định hơn." %}
+        {% else %}
+            {% set confidence = 40 %}
+            {% set confidence_text = "Dự đoán còn khá sơ bộ vì số lượng bản ghi vẫn còn ít." %}
+        {% endif %}
+    {% endif %}
+
+    <div class="page-header header-blue mb-3">
+        <div class="row align-items-center g-2">
+            <div class="col-md-8">
+                <h1>Dự đoán cân nặng</h1>
+                <p>Phân tích xu hướng cân nặng trong tương lai dựa trên dữ liệu lịch sử của bạn.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="status-chip">Người dùng: {{ user.full_name }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if predicted_7 is not none and predicted_30 is not none %}
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-top">
+                    <div class="metric-icon">⚖️</div>
+                    <div class="metric-label">Cân nặng hiện tại</div>
+                </div>
+                <div class="metric-value">{{ current_weight }} kg</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-top">
+                    <div class="metric-icon">📅</div>
+                    <div class="metric-label">Dự đoán sau 7 ngày</div>
+                </div>
+                <div class="metric-value text-primary">{{ predicted_7 }} kg</div>
+                <div class="small-muted {{ trend_7_class }}">{{ trend_7_text }} ({{ diff_7 }} kg)</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-top">
+                    <div class="metric-icon">🗓️</div>
+                    <div class="metric-label">Dự đoán sau 30 ngày</div>
+                </div>
+                <div class="metric-value text-success">{{ predicted_30 }} kg</div>
+                <div class="small-muted {{ trend_30_class }}">{{ trend_30_text }} ({{ diff_30 }} kg)</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-top">
+                    <div class="metric-icon">🤖</div>
+                    <div class="metric-label">Mô hình</div>
+                </div>
+                <div class="metric-value">Linear Regression</div>
+                <div class="small-muted">Dự đoán theo xu hướng thời gian</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card section-card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                        <div class="section-title mb-0">Biểu đồ cân nặng và dự đoán</div>
+                        <div class="small-muted">Đường liền: lịch sử · Đường nét đứt: dự đoán</div>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas id="predictChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card section-card">
+                <div class="card-body">
+                    <div class="section-title">Độ tin cậy và cách hiểu kết quả</div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="predict-confidence-box h-100">
+                                <div class="predict-confidence-number">{{ confidence }}%</div>
+                                <div class="predict-confidence-sub mt-2">Mức độ tin cậy tương đối</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="predict-confidence-box h-100">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="small-muted">Mức tin cậy</span>
+                                    <span class="small-muted">{{ confidence }}%</span>
+                                </div>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-info" style="width: {{ confidence }}%"></div>
+                                </div>
+                                <div class="small-muted">
+                                    {{ confidence_text }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="predict-mini-grid">
+                        <div class="predict-tip-card">
+                            <div class="predict-tip-icon">📈</div>
+                            <div class="predict-tip-title">Dự đoán dựa trên xu hướng</div>
+                            <p class="predict-tip-text">
+                                Hệ thống sử dụng dữ liệu lịch sử cân nặng để tìm ra hướng thay đổi theo thời gian, không dự đoán ngẫu nhiên.
+                            </p>
+                        </div>
+
+                        <div class="predict-tip-card">
+                            <div class="predict-tip-icon">📝</div>
+                            <div class="predict-tip-title">Càng nhiều dữ liệu càng tốt</div>
+                            <p class="predict-tip-text">
+                                Khi bạn cập nhật cân nặng đều đặn, đường xu hướng sẽ ổn định hơn và kết quả dự đoán sẽ sát thực tế hơn.
+                            </p>
+                        </div>
+
+                        <div class="predict-tip-card">
+                            <div class="predict-tip-icon">🎯</div>
+                            <div class="predict-tip-title">Chỉ nên xem là tham khảo</div>
+                            <p class="predict-tip-text">
+                                Cân nặng còn chịu ảnh hưởng bởi ăn uống, giấc ngủ và vận động mỗi ngày, nên kết quả nên được dùng để tham khảo.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="summary-box mt-3 mb-0">
+                        <div class="summary-title">Mẹo để dự đoán tốt hơn</div>
+                        <div class="summary-value">
+                            Hãy ghi cân nặng vào cùng một thời điểm trong ngày, ví dụ buổi sáng sau khi ngủ dậy, để dữ liệu nhất quán hơn.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card section-card mb-3">
+                <div class="card-body">
+                    <div class="section-title">Nhận xét xu hướng</div>
+
+                    <div class="insight-box mb-3">
+                        <div class="small-muted mb-1">Trong 7 ngày tới</div>
+                        <div class="fw-bold {{ trend_7_class }}">{{ trend_7_text }}</div>
+                        <div class="small-muted">
+                            Dự đoán thay đổi {{ diff_7 }} kg so với hiện tại.
+                        </div>
+                    </div>
+
+                    <div class="insight-box">
+                        <div class="small-muted mb-1">Trong 30 ngày tới</div>
+                        <div class="fw-bold {{ trend_30_class }}">{{ trend_30_text }}</div>
+                        <div class="small-muted">
+                            Dự đoán thay đổi {{ diff_30 }} kg so với hiện tại.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card section-card">
+                <div class="card-body">
+                    <div class="section-title">Tóm tắt AI</div>
+
+                    <div class="summary-box">
+                        <div class="summary-title">Nhận định ngắn hạn</div>
+                        <div class="summary-value">
+                            {% if diff_7 < 0 %}
+                                Nếu giữ nhịp hiện tại, cân nặng của bạn có xu hướng giảm trong tuần tới.
+                            {% elif diff_7 > 0 %}
+                                Dữ liệu đang cho thấy xu hướng tăng cân trong tuần tới.
+                            {% else %}
+                                Cân nặng của bạn đang có xu hướng ổn định trong tuần tới.
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="quote-box">
+                        <div class="summary-title">Gợi ý</div>
+                        <div class="summary-value">
+                            Hãy tiếp tục cập nhật cân nặng đều đặn để dự đoán chính xác và sát thực tế hơn.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if predicted_7 is not none and predicted_30 is not none %}
+<script>
+    const predictLabels = {{ labels | tojson }};
+    const predictWeights = {{ weights | tojson }};
+    const futureLabels = {{ future_labels | tojson }};
+    const futureWeights = {{ future_weights | tojson }};
+    let predictChartInstance = null;
+
+    function renderPredictChart() {
+        const canvas = document.getElementById('predictChart');
+        if (!canvas) return;
+
+        const allLabels = predictLabels.concat(futureLabels);
+        const historyData = predictWeights.concat([null, null]);
+        const predictionData = new Array(predictWeights.length - 1).fill(null)
+            .concat([predictWeights[predictWeights.length - 1]])
+            .concat(futureWeights);
+
+        const currentWeight = predictWeights[predictWeights.length - 1];
+        const lineColor = futureWeights[0] <= currentWeight ? '#16a34a' : '#dc3545';
+        const bgColor = futureWeights[0] <= currentWeight
+            ? 'rgba(22, 163, 74, 0.12)'
+            : 'rgba(220, 53, 69, 0.12)';
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#f8fafc' : '#212529';
+        const gridColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.10)';
+        const legendColor = isDark ? '#f8fafc' : '#212529';
+
+        if (predictChartInstance) {
+            predictChartInstance.destroy();
+        }
+
+        predictChartInstance = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: allLabels,
+                datasets: [
+                    {
+                        label: 'Lịch sử cân nặng',
+                        data: historyData,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.08)',
+                        borderWidth: 3,
+                        tension: 0.35,
+                        fill: false,
+                        pointRadius: 4,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#0d6efd',
+                        pointBorderColor: '#0d6efd'
+                    },
+                    {
+                        label: 'Dự đoán',
+                        data: predictionData,
+                        borderColor: lineColor,
+                        backgroundColor: bgColor,
+                        borderWidth: 3,
+                        tension: 0.35,
+                        fill: false,
+                        borderDash: [8, 6],
+                        pointRadius: 4,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: lineColor,
+                        pointBorderColor: lineColor
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: legendColor,
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            },
+                            padding: 14
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: textColor,
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            },
+                            maxRotation: 35,
+                            minRotation: 35
+                        },
+                        grid: {
+                            color: gridColor
+                        },
+                        border: {
+                            color: gridColor
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            color: textColor,
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            }
+                        },
+                        grid: {
+                            color: gridColor
+                        },
+                        border: {
+                            color: gridColor
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        renderPredictChart();
+
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function () {
+                setTimeout(renderPredictChart, 50);
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

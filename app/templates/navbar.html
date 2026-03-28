@@ -1,0 +1,50 @@
+<nav class="navbar navbar-expand-lg navbar-dark custom-navbar mb-3">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/dashboard">Weight Management</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.url.path == '/profile' %}active{% endif %}" href="/profile">
+                        Hồ sơ
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.url.path == '/weight' %}active{% endif %}" href="/weight">
+                        Cân nặng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.url.path == '/predict' %}active{% endif %}" href="/predict">
+                        Dự đoán
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.url.path == '/health' %}active{% endif %}" href="/health">
+                        Sức khỏe
+                    </a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                {% if user %}
+                <span class="navbar-text small text-white-50">
+                    Xin chào, {{ user.full_name }}
+                </span>
+                {% endif %}
+                <a href="/logout" class="btn btn-sm btn-outline-light rounded-pill px-3">
+                    Đăng xuất
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>

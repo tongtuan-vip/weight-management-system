@@ -1,0 +1,69 @@
+<div class="app-shell">
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-top">
+            <div class="brand-wrap">
+                <div class="brand-icon">⚖️</div>
+                <div class="brand-text sidebar-text">FitTrack</div>
+            </div>
+
+            <div class="top-actions">
+                <button id="themeToggle" class="toggle-btn" type="button" title="Đổi giao diện">🌙</button>
+                <button id="toggleSidebar" class="toggle-btn" type="button" title="Thu gọn menu">☰</button>
+            </div>
+        </div>
+
+        <div class="user-box">
+            <div class="user-avatar">👤</div>
+            <div class="sidebar-text">
+                <div class="user-name">{{ user.full_name if user else 'Người dùng' }}</div>
+                <div class="user-sub">Quản lý sức khỏe</div>
+            </div>
+        </div>
+
+        <nav class="menu-list">
+            <a href="/dashboard" class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}">
+                <span class="menu-icon">🏠</span>
+                <span class="sidebar-text">Dashboard</span>
+            </a>
+
+            <a href="/profile" class="menu-item {% if request.url.path == '/profile' %}active{% endif %}">
+                <span class="menu-icon">📝</span>
+                <span class="sidebar-text">Hồ sơ</span>
+            </a>
+
+            <a href="/weight" class="menu-item {% if request.url.path == '/weight' %}active{% endif %}">
+                <span class="menu-icon">⚖️</span>
+                <span class="sidebar-text">Cân nặng</span>
+            </a>
+
+            <a href="/predict" class="menu-item {% if request.url.path == '/predict' %}active{% endif %}">
+                <span class="menu-icon">🤖</span>
+                <span class="sidebar-text">Dự đoán</span>
+            </a>
+
+            <a href="/health" class="menu-item {% if request.url.path == '/health' %}active{% endif %}">
+                <span class="menu-icon">💚</span>
+                <span class="sidebar-text">Sức khỏe</span>
+            </a>
+            <a href="/ai-chat" class="menu-item {% if request.url.path == '/ai-chat' %}active{% endif %}">
+    <span class="menu-icon">🤖</span>
+    <span class="sidebar-text">Trợ lý AI</span>
+</a>
+<a href="/analysis" class="menu-item {% if request.url.path == '/analysis' %}active{% endif %}">
+    <span class="menu-icon">📈</span>
+    <span class="sidebar-text">Phân tích</span>
+</a>
+<a href="/reminders" class="menu-item {% if request.url.path == '/reminders' %}active{% endif %}">
+    <span class="menu-icon">⏰</span>
+    <span class="sidebar-text">Nhắc nhở</span>
+</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/logout" class="menu-item logout-item">
+                <span class="menu-icon">🚪</span>
+                <span class="sidebar-text">Đăng xuất</span>
+            </a>
+        </div>
+    </aside>
+</div>

@@ -1,0 +1,942 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+
+<style>
+    .dashboard-wrap {
+        max-width: 1280px;
+    }
+    
+    .dashboard-wrap {
+        max-width: 1280px;
+    }
+
+    .dashboard-mini-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .dashboard-tip-card {
+        border-radius: 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        padding: 14px;
+        height: 100%;
+    }
+
+    .dashboard-tip-icon {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+
+    .dashboard-tip-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: var(--text-main);
+    }
+
+    .dashboard-tip-text {
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+
+    .dashboard-highlight-box {
+        border-radius: 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        padding: 14px;
+    }
+
+    .dashboard-highlight-number {
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1;
+    }
+
+    .dashboard-highlight-sub {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .hero-card {
+        background: linear-gradient(135deg, #198754, #20c997);
+        color: white;
+        border-radius: 22px;
+        padding: 22px 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .hero-title {
+        font-size: 30px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .hero-subtitle {
+        font-size: 15px;
+        opacity: 0.95;
+        margin-bottom: 0;
+    }
+
+    .hero-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .hero-chip {
+        background: rgba(255,255,255,0.16);
+        color: white;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .hero-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr 1fr;
+        gap: 14px;
+        margin-top: 18px;
+    }
+
+    .hero-mini-card {
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 16px;
+        padding: 14px;
+        height: 100%;
+    }
+
+    .hero-mini-title {
+        font-size: 13px;
+        opacity: 0.9;
+        margin-bottom: 6px;
+    }
+
+    .hero-mini-value {
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .hero-mini-text {
+        font-size: 14px;
+        line-height: 1.5;
+        opacity: 0.96;
+        margin-bottom: 0;
+    }
+
+    .model-view-custom {
+        width: 100%;
+        height: 240px;
+    }
+
+    @media (max-width: 991px) {
+        .dashboard-mini-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-title {
+            font-size: 26px;
+        }
+    }
+
+
+    .hero-card {
+        background: linear-gradient(135deg, #198754, #20c997);
+        color: white;
+        border-radius: 22px;
+        padding: 22px 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .hero-title {
+        font-size: 30px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .hero-subtitle {
+        font-size: 15px;
+        opacity: 0.95;
+        margin-bottom: 0;
+    }
+
+    .hero-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .hero-chip {
+        background: rgba(255,255,255,0.16);
+        color: white;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .hero-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr 1fr;
+        gap: 14px;
+        margin-top: 18px;
+    }
+
+    .hero-mini-card {
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 16px;
+        padding: 14px;
+        height: 100%;
+    }
+
+    .hero-mini-title {
+        font-size: 13px;
+        opacity: 0.9;
+        margin-bottom: 6px;
+    }
+
+    .hero-mini-value {
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .hero-mini-text {
+        font-size: 14px;
+        line-height: 1.5;
+        opacity: 0.96;
+        margin-bottom: 0;
+    }
+
+    .dashboard-mini-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .dashboard-tip-card {
+        border-radius: 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        padding: 14px;
+        height: 100%;
+    }
+
+    .dashboard-tip-icon {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+
+    .dashboard-tip-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: var(--text-main);
+    }
+
+    .dashboard-tip-text {
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+
+    .dashboard-highlight-box {
+        border-radius: 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        padding: 14px;
+    }
+
+    .dashboard-highlight-number {
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1;
+    }
+
+    .dashboard-highlight-sub {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .dashboard-top-note {
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 0;
+    }
+    .dashboard-wrap .section-card .summary-box:last-child,
+    .dashboard-wrap .section-card .quote-box:last-child {
+    margin-bottom: 0;
+}
+
+    .model-view-custom {
+        width: 100%;
+        height: 240px;
+    }
+
+    @media (max-width: 991px) {
+        .dashboard-mini-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-title {
+            font-size: 26px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrap">
+
+    {% if bmi %}
+        {% if bmi < 18.5 %}
+            {% set bmi_note = "Bạn đang ở mức thiếu cân, nên ưu tiên dinh dưỡng và tập tăng cơ." %}
+        {% elif bmi < 25 %}
+            {% set bmi_note = "Thể trạng hiện tại khá cân đối, hãy duy trì thói quen tốt." %}
+        {% elif bmi < 30 %}
+            {% set bmi_note = "Bạn đang ở mức thừa cân, nên kiểm soát calo và tăng vận động." %}
+        {% else %}
+            {% set bmi_note = "Cần chú ý sức khỏe nhiều hơn, nên theo dõi chế độ ăn và luyện tập thường xuyên." %}
+        {% endif %}
+    {% else %}
+        {% set bmi_note = "Hãy cập nhật hồ sơ và cân nặng để hệ thống phân tích chính xác hơn." %}
+    {% endif %}
+
+    {% set dashboard_score = 0 %}
+    {% if user.age %}{% set dashboard_score = dashboard_score + 20 %}{% endif %}
+    {% if user.gender %}{% set dashboard_score = dashboard_score + 15 %}{% endif %}
+    {% if user.height %}{% set dashboard_score = dashboard_score + 15 %}{% endif %}
+    {% if latest_weight %}{% set dashboard_score = dashboard_score + 20 %}{% endif %}
+    {% if user.target_weight %}{% set dashboard_score = dashboard_score + 15 %}{% endif %}
+    {% if user.activity_level %}{% set dashboard_score = dashboard_score + 15 %}{% endif %}
+
+    <div class="hero-card mb-3">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div>
+                <div class="hero-title">Xin chào, {{ user.full_name }} 👋</div>
+                <p class="hero-subtitle">Đây là tổng quan nhanh về tình trạng cân nặng và sức khỏe của bạn hôm nay.</p>
+
+                <div class="hero-badges">
+                    {% if goal == "Giảm cân" %}
+                        <span class="hero-chip">🎯 Mục tiêu: {{ goal }}</span>
+                    {% elif goal == "Tăng cân" %}
+                        <span class="hero-chip">🎯 Mục tiêu: {{ goal }}</span>
+                    {% elif goal == "Duy trì" %}
+                        <span class="hero-chip">🎯 Mục tiêu: {{ goal }}</span>
+                    {% else %}
+                        <span class="hero-chip">🎯 {{ goal }}</span>
+                    {% endif %}
+
+                    <span class="hero-chip">📊 Dữ liệu: {{ dashboard_score }}%</span>
+<span class="hero-chip">🔥 Streak: {{ streak }} ngày</span>
+<span class="hero-chip">
+    📅 Ngày ước tính đạt mục tiêu:
+    {% if target_date_prediction %}
+        {{ target_date_prediction.strftime('%d/%m/%Y') }}
+    {% else %}
+        Chưa đủ dữ liệu
+    {% endif %}
+</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-grid">
+            <div class="hero-mini-card">
+                <div class="hero-mini-title">Thông điệp hôm nay</div>
+                <p class="hero-mini-text">
+                    “Tiến bộ nhỏ mỗi ngày sẽ tạo nên thay đổi lớn trong tương lai.”
+                </p>
+            </div>
+
+            <div class="hero-mini-card">
+                <div class="hero-mini-title">Lời nhắc hôm nay</div>
+                <p class="hero-mini-text">
+                    {% if has_today_record %}
+                        ✅ Bạn đã cập nhật cân nặng hôm nay. Tuyệt vời, hãy tiếp tục giữ nhịp này.
+                    {% else %}
+                        ⏰ Bạn chưa cập nhật cân nặng hôm nay. Hãy thêm bản ghi mới để hệ thống theo dõi chính xác hơn.
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="hero-mini-card">
+                <div class="hero-mini-title">Chuỗi cập nhật</div>
+                <div class="hero-mini-value">🔥 {{ streak }} ngày</div>
+                <p class="hero-mini-text mt-2">
+                    {% if streak >= 7 %}
+                        Bạn đang duy trì rất tốt việc cập nhật cân nặng.
+                    {% elif streak >= 3 %}
+                        Bạn đang có thói quen theo dõi khá ổn.
+                    {% else %}
+                        Hãy cập nhật cân nặng đều hơn để phân tích tốt hơn.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-label">Tuổi</div>
+                    <div class="stat-value text-primary">{{ user.age or '---' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-label">BMI</div>
+                    <div class="stat-value text-success">{{ bmi or '---' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-label">Hiện tại</div>
+                    <div class="stat-value text-warning">
+                        {{ latest_weight if latest_weight else '---' }}
+                        {% if latest_weight %}<span class="fs-6">kg</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-label">Mục tiêu</div>
+                    <div class="stat-value text-danger">
+                        {{ user.target_weight if user.target_weight else '---' }}
+                        {% if user.target_weight %}<span class="fs-6">kg</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-label">Dự đoán 7 ngày</div>
+                    <div class="stat-value text-info">
+                        {{ predicted_7 if predicted_7 else '---' }}
+                        {% if predicted_7 %}<span class="fs-6">kg</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-label">Dự đoán 30 ngày</div>
+                    <div class="stat-value text-info">
+                        {{ predicted_30 if predicted_30 else '---' }}
+                        {% if predicted_30 %}<span class="fs-6">kg</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-lg-5">
+            <div class="card section-card h-100">
+                <div class="card-body">
+                    <div class="section-title">Thông tin cá nhân</div>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Họ và tên</div>
+                            <div class="info-value">{{ user.full_name }}</div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Email</div>
+                            <div class="info-value">{{ user.email }}</div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Giới tính</div>
+                            <div class="info-value">{{ user.gender or 'Chưa cập nhật' }}</div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Vận động</div>
+                            <div class="info-value">{{ user.activity_level or 'Chưa cập nhật' }}</div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Chiều cao</div>
+                            <div class="info-value">
+                                {{ user.height or 'Chưa cập nhật' }}{% if user.height %} cm{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Cân nặng hiện tại</div>
+                            <div class="info-value">
+                                {{ latest_weight or 'Chưa cập nhật' }}{% if latest_weight %} kg{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Mục tiêu</div>
+                            <div class="info-value">
+                                {{ user.target_weight or 'Chưa cập nhật' }}{% if user.target_weight %} kg{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Trạng thái hồ sơ</div>
+                            <div class="info-value">
+                                {% if user.age and user.gender and user.height and user.target_weight and user.activity_level %}
+                                    <span class="badge text-bg-success">Đã hoàn thiện</span>
+                                {% else %}
+                                    <span class="badge text-bg-warning">Chưa đầy đủ</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-box mt-3 mb-0">
+                        <div class="summary-title">Nhận xét nhanh</div>
+                        <div class="summary-value">{{ bmi_note }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card section-card h-100">
+                <div class="card-body">
+                    <div class="section-title">Biểu đồ cân nặng</div>
+                    {% if labels and weights %}
+                        <div class="chart-box">
+                            <canvas id="dashboardWeightChart"></canvas>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-secondary mb-0">
+                            Chưa có dữ liệu cân nặng.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card section-card h-100">
+                <div class="card-body">
+                    <div class="section-title">Mô hình 3D</div>
+
+                    {% if model_file %}
+                        <p class="small-muted mb-2">Phân loại: <strong>{{ body_type }}</strong></p>
+                        <div class="model-box">
+                            <model-viewer
+                                src="{{ model_file }}"
+                                auto-rotate
+                                camera-controls
+                                shadow-intensity="1"
+                                exposure="1"
+                                scale="0.08 0.08 0.08"
+                                camera-orbit="0deg 75deg 4m"
+                                field-of-view="28deg"
+                                class="model-view-custom">
+                            </model-viewer>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-secondary mb-0">
+                            Chưa đủ dữ liệu.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card section-card h-100">
+            <div class="card-body">
+                <div class="section-title">Tình trạng dữ liệu</div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-4">
+                        <div class="dashboard-highlight-box h-100">
+                            <div class="dashboard-highlight-number">{{ dashboard_score }}%</div>
+                            <div class="dashboard-highlight-sub mt-2">Dữ liệu hiện có</div>
+                        </div>
+                    </div>
+
+                    <div class="col-8">
+                        <div class="dashboard-highlight-box h-100">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="small-muted">Tiến độ dữ liệu</span>
+                                <span class="small-muted">{{ dashboard_score }}%</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-success" style="width: {{ dashboard_score }}%"></div>
+                            </div>
+                            <div class="small-muted">
+                                {% if dashboard_score == 100 %}
+                                    Hệ thống đã có đủ dữ liệu cơ bản để phân tích và dự đoán ổn định hơn.
+                                {% elif dashboard_score >= 70 %}
+                                    Dữ liệu của bạn đã khá đầy đủ, nên tiếp tục cập nhật cân nặng định kỳ.
+                                {% else %}
+                                    Bạn nên hoàn thiện hồ sơ và thêm dữ liệu cân nặng để kết quả sát hơn.
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-box mb-3">
+                    <div class="summary-title">Tóm tắt mục tiêu</div>
+                    <div class="summary-value">
+                        {% if goal %}
+                            Mục tiêu hiện tại của bạn là <strong>{{ goal }}</strong>.
+                        {% else %}
+                            Hãy cập nhật mục tiêu cân nặng để hệ thống theo dõi rõ hơn.
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="summary-box mb-0">
+                    <div class="summary-title">Đánh giá nhanh</div>
+                    <div class="summary-value">
+                        {% if dashboard_score >= 90 %}
+                            Dữ liệu của bạn đang rất tốt để hệ thống hỗ trợ theo dõi và dự đoán.
+                        {% elif dashboard_score >= 70 %}
+                            Hệ thống đã có nền tảng khá tốt, bạn chỉ cần duy trì cập nhật đều.
+                        {% else %}
+                            Hãy bổ sung thêm hồ sơ và cân nặng để có trải nghiệm đầy đủ hơn.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card section-card h-100">
+            <div class="card-body">
+                <div class="section-title">Theo dõi thông minh</div>
+
+                <div class="dashboard-mini-grid">
+                    <div class="dashboard-tip-card">
+                        <div class="dashboard-tip-icon">📉</div>
+                        <div class="dashboard-tip-title">Xu hướng cân nặng</div>
+                        <p class="dashboard-tip-text">
+                            Hệ thống ghi nhận các mốc cân nặng để theo dõi bạn đang giảm, tăng hay duy trì.
+                        </p>
+                    </div>
+
+                    <div class="dashboard-tip-card">
+                        <div class="dashboard-tip-icon">🧠</div>
+                        <div class="dashboard-tip-title">Dự đoán tương lai</div>
+                        <p class="dashboard-tip-text">
+                            Từ dữ liệu lịch sử, hệ thống đưa ra dự đoán ngắn hạn để bạn dễ theo dõi tiến trình.
+                        </p>
+                    </div>
+
+                    <div class="dashboard-tip-card">
+                        <div class="dashboard-tip-icon">💚</div>
+                        <div class="dashboard-tip-title">Phân tích sức khỏe</div>
+                        <p class="dashboard-tip-text">
+                            BMI, BMR, TDEE và thể trạng được tính toán để hỗ trợ bạn xây dựng thói quen phù hợp.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="summary-box mt-3 mb-3">
+                    <div class="summary-title">Mẹo sử dụng</div>
+                    <div class="summary-value">
+                        Bạn nên nhập cân nặng vào cùng một thời điểm trong ngày, ví dụ buổi sáng, để biểu đồ và dự đoán nhất quán hơn.
+                    </div>
+                </div>
+
+                <div class="quote-box mb-0">
+                    <div class="summary-title">Lợi ích</div>
+                    <div class="summary-value">
+                        Khi dữ liệu được cập nhật đều đặn, hệ thống sẽ hỗ trợ bạn theo dõi tiến trình rõ ràng và dễ ra quyết định hơn.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card section-card h-100">
+            <div class="card-body">
+                <div class="section-title">Lộ trình mục tiêu</div>
+
+                <div class="summary-box mb-3">
+                    <div class="summary-title">Ngày ước tính</div>
+                    <div class="summary-value">
+                        {% if target_date_prediction %}
+                            {{ target_date_prediction.strftime('%d/%m/%Y') }}
+                        {% else %}
+                            Chưa đủ dữ liệu
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="dashboard-highlight-box h-100">
+                            <div class="dashboard-highlight-sub mb-2">Mục tiêu hiện tại</div>
+                            <div class="dashboard-highlight-number" style="font-size: 22px;">
+                                {% if user.target_weight %}
+                                    {{ user.target_weight }}<span style="font-size:14px;"> kg</span>
+                                {% else %}
+                                    ---
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="dashboard-highlight-box h-100">
+                            <div class="dashboard-highlight-sub mb-2">Cân nặng hiện tại</div>
+                            <div class="dashboard-highlight-number" style="font-size: 22px;">
+                                {% if latest_weight %}
+                                    {{ latest_weight }}<span style="font-size:14px;"> kg</span>
+                                {% else %}
+                                    ---
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card section-card mb-3">
+    <div class="card-body">
+        <div class="section-title">Tiến trình mục tiêu</div>
+
+        <div class="summary-box mb-3">
+            <div class="summary-title">Mức hoàn thành</div>
+            <div class="summary-value">{{ progress_percent }}%</div>
+        </div>
+
+        <div class="progress mb-3" style="height: 14px;">
+            <div class="progress-bar bg-success" style="width: {{ progress_percent }}%"></div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="summary-box mb-0">
+                    <div class="summary-title">Còn lại</div>
+                    <div class="summary-value">
+                        {% if remaining_weight is not none %}
+                            {{ remaining_weight }} kg
+                        {% else %}
+                            Chưa đủ dữ liệu
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="summary-box mb-0">
+                    <div class="summary-title">Trạng thái</div>
+                    <div class="summary-value">
+                        {% if goal_direction == "lose" %}
+                            Đang giảm cân
+                        {% elif goal_direction == "gain" %}
+                            Đang tăng cân
+                        {% elif goal_direction == "maintain" %}
+                            Đang duy trì
+                        {% else %}
+                            Chưa xác định
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+              
+
+                <div class="quote-box mb-0">
+                    <div class="summary-title">Nhận xét</div>
+                    <div class="summary-value">
+                        {% if target_date_prediction %}
+                            Nếu tiếp tục xu hướng hiện tại, bạn có thể đạt mục tiêu vào ngày trên.
+                        {% else %}
+                            Hệ thống chưa thể ước tính ngày đạt mục tiêu vì dữ liệu chưa đủ hoặc xu hướng hiện tại chưa rõ.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if labels and weights %}
+<script>
+    const dashboardLabels = {{ labels | tojson }};
+    const dashboardWeights = {{ weights | tojson }};
+    let dashboardChartInstance = null;
+
+    function renderDashboardChart() {
+        const canvas = document.getElementById('dashboardWeightChart');
+        if (!canvas) return;
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#f8fafc' : '#212529';
+        const gridColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.10)';
+        const legendColor = isDark ? '#f8fafc' : '#212529';
+
+        if (dashboardChartInstance) {
+            dashboardChartInstance.destroy();
+        }
+
+        dashboardChartInstance = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: dashboardLabels,
+                datasets: [{
+                    label: 'Cân nặng (kg)',
+                    data: dashboardWeights,
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22, 163, 74, 0.12)',
+                    borderWidth: 3,
+                    tension: 0.35,
+                    fill: false,
+                    pointRadius: 4,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#16a34a',
+                    pointBorderColor: '#16a34a'
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: legendColor,
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            },
+                            padding: 14
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: textColor,
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            },
+                            maxRotation: 35,
+                            minRotation: 35
+                        },
+                        grid: {
+                            color: gridColor
+                        },
+                        border: {
+                            color: gridColor
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            color: textColor,
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            }
+                        },
+                        grid: {
+                            color: gridColor
+                        },
+                        border: {
+                            color: gridColor
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        renderDashboardChart();
+
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function () {
+                setTimeout(renderDashboardChart, 50);
+            });
+        }
+    });
+</script>
+{% endif %}
+
+{% if not has_today_record %}
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 3000;">
+    <div id="weightReminderToast" class="toast text-bg-warning border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                Bạn chưa cập nhật cân nặng hôm nay. Hãy thêm bản ghi mới nhé.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const toastEl = document.getElementById("weightReminderToast");
+    if (toastEl) {
+        const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+        toast.show();
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

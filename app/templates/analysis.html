@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Phân tích xu hướng{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .analysis-wrap {
+        max-width: 1320px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analysis-wrap">
+    <div class="page-header header-blue mb-3">
+        <div class="row align-items-center g-2">
+            <div class="col-md-8">
+                <h1>Phân tích xu hướng</h1>
+                <p>Đánh giá tiến trình thay đổi cân nặng theo thời gian.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="status-chip">Người dùng: {{ user.full_name }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if message %}
+        <div class="alert alert-warning">{{ message }}</div>
+    {% else %}
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Cân nặng ban đầu</div>
+                    <div class="metric-value">{{ first_weight }} kg</div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Cân nặng hiện tại</div>
+                    <div class="metric-value">{{ latest_weight }} kg</div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Tổng thay đổi</div>
+                    <div class="metric-value {{ trend_class }}">{{ total_change }} kg</div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Tốc độ / tuần</div>
+                    <div class="metric-value">{{ weekly_change }} kg</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="card section-card">
+                    <div class="card-body">
+                        <div class="section-title">Biểu đồ xu hướng</div>
+                        <div class="chart-box">
+                            <canvas id="analysisChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card section-card mb-3">
+                    <div class="card-body">
+                        <div class="section-title">Nhận định</div>
+
+                        <div class="summary-box mb-3">
+                            <div class="summary-title">Xu hướng hiện tại</div>
+                            <div class="summary-value {{ trend_class }}">{{ trend_label }}</div>
+                        </div>
+
+                        <div class="quote-box">
+                            <div class="summary-title">Đánh giá tiến trình</div>
+                            <div class="summary-value">{{ health_warning }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card section-card">
+                    <div class="card-body">
+                        <div class="section-title">Gợi ý</div>
+
+                        <div class="summary-box mb-2">
+                            <div class="summary-value">Bạn nên cân vào cùng thời điểm trong ngày để theo dõi chính xác hơn.</div>
+                        </div>
+
+                        <div class="summary-box mb-0">
+                            <div class="summary-value">Nếu cân nặng thay đổi quá nhanh, hãy xem lại chế độ ăn, ngủ và cường độ tập luyện.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if labels and weights %}
+<script>
+    const labels = {{ labels | tojson }};
+    const weights = {{ weights | tojson }};
+
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const textColor = isDark ? "#f8fafc" : "#212529";
+    const gridColor = isDark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.10)";
+
+    new Chart(document.getElementById("analysisChart"), {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Cân nặng (kg)",
+                data: weights,
+                borderColor: "#16a34a",
+                backgroundColor: "rgba(22,163,74,0.12)",
+                borderWidth: 3,
+                tension: 0.35,
+                fill: false,
+                pointRadius: 4,
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor },
+                    border: { color: gridColor }
+                },
+                y: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor },
+                    border: { color: gridColor }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

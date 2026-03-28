@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Nhắc nhở cá nhân{% endblock %}
+
+{% block head_extra %}
+<style>
+    .reminders-wrap {
+        max-width: 1320px;
+    }
+
+    .reminder-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .reminder-preview-card {
+        border-radius: 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border-color);
+        padding: 14px;
+    }
+
+    .reminder-preview-time {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 4px;
+    }
+
+    .reminder-preview-label {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+        .reminder-preview-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reminders-wrap">
+    <div class="page-header header-green mb-3">
+        <div class="row align-items-center g-2">
+            <div class="col-md-8">
+                <h1>Nhắc nhở cá nhân</h1>
+                <p>Thiết lập giờ ăn, uống nước và tập luyện phù hợp với thói quen sinh hoạt của bạn.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="status-chip">Mục tiêu: {{ goal }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card section-card">
+                <div class="card-body">
+                    <div class="section-title">Cài đặt nhắc nhở</div>
+
+                    <form action="/reminders" method="post">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Giờ thức dậy</label>
+                                <input type="time" name="wake_up_time" class="form-control" value="{{ settings.wake_up_time or '' }}" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Giờ đi ngủ</label>
+                                <input type="time" name="sleep_time" class="form-control" value="{{ settings.sleep_time or '' }}" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Ăn sáng</label>
+                                <input type="time" name="breakfast_time" class="form-control" value="{{ settings.breakfast_time or '' }}" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Ăn trưa</label>
+                                <input type="time" name="lunch_time" class="form-control" value="{{ settings.lunch_time or '' }}" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Ăn tối</label>
+                                <input type="time" name="dinner_time" class="form-control" value="{{ settings.dinner_time or '' }}" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Giờ tập thể dục</label>
+                                <input type="time" name="workout_time" class="form-control" value="{{ settings.workout_time or '' }}" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Nhắc uống nước mỗi</label>
+                                <input type="number" name="water_interval_minutes" class="form-control" value="{{ settings.water_interval_minutes or 120 }}" min="15" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Mục tiêu nước (ml)</label>
+                                <input type="number" name="daily_water_goal_ml" class="form-control" value="{{ settings.daily_water_goal_ml or 2000 }}" min="500" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" name="enable_meal_reminders" {% if settings.enable_meal_reminders %}checked{% endif %}>
+                                    <label class="form-check-label">Bật nhắc giờ ăn</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" name="enable_water_reminders" {% if settings.enable_water_reminders %}checked{% endif %}>
+                                    <label class="form-check-label">Bật nhắc uống nước</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" name="enable_workout_reminders" {% if settings.enable_workout_reminders %}checked{% endif %}>
+                                    <label class="form-check-label">Bật nhắc tập thể dục</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success btn-save">Lưu cài đặt nhắc nhở</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card section-card mb-3">
+                <div class="card-body">
+                    <div class="section-title">Lịch nhắc hôm nay</div>
+
+                    <div class="reminder-preview-grid">
+                        <div class="reminder-preview-card">
+                            <div class="reminder-preview-time">{{ settings.breakfast_time }}</div>
+                            <div class="reminder-preview-label">🍳 Ăn sáng</div>
+                        </div>
+
+                        <div class="reminder-preview-card">
+                            <div class="reminder-preview-time">{{ settings.lunch_time }}</div>
+                            <div class="reminder-preview-label">🍱 Ăn trưa</div>
+                        </div>
+
+                        <div class="reminder-preview-card">
+                            <div class="reminder-preview-time">{{ settings.dinner_time }}</div>
+                            <div class="reminder-preview-label">🍽️ Ăn tối</div>
+                        </div>
+
+                        <div class="reminder-preview-card">
+                            <div class="reminder-preview-time">{{ settings.workout_time }}</div>
+                            <div class="reminder-preview-label">🏃 Tập thể dục</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card section-card">
+                <div class="card-body">
+                    <div class="section-title">Tóm tắt</div>
+
+                    <div class="summary-box mb-2">
+                        <div class="summary-title">Nhắc uống nước</div>
+                        <div class="summary-value">Mỗi {{ settings.water_interval_minutes }} phút</div>
+                    </div>
+
+                    <div class="summary-box mb-2">
+                        <div class="summary-title">Mục tiêu nước</div>
+                        <div class="summary-value">{{ settings.daily_water_goal_ml }} ml / ngày</div>
+                    </div>
+
+                    <div class="quote-box">
+                        <div class="summary-title">Lưu ý</div>
+                        <div class="summary-value">
+                            Các nhắc nhở sẽ hoạt động khi bạn đang mở ứng dụng trên trình duyệt.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 5000;">
+        <div id="reminderToast" class="toast border-0 text-bg-success" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="reminderToastBody">
+                    Nhắc nhở
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const reminderSettings = {
+        breakfast: "{{ settings.breakfast_time if settings.enable_meal_reminders else '' }}",
+        lunch: "{{ settings.lunch_time if settings.enable_meal_reminders else '' }}",
+        dinner: "{{ settings.dinner_time if settings.enable_meal_reminders else '' }}",
+        workout: "{{ settings.workout_time if settings.enable_workout_reminders else '' }}",
+        waterEnabled: {{ 'true' if settings.enable_water_reminders else 'false' }},
+        waterInterval: {{ settings.water_interval_minutes or 120 }},
+        dailyWaterGoal: {{ settings.daily_water_goal_ml or 2000 }}
+    };
+
+    const shownReminders = new Set();
+
+    function showReminder(message) {
+        const toastEl = document.getElementById("reminderToast");
+        const toastBody = document.getElementById("reminderToastBody");
+
+        if (!toastEl || !toastBody) return;
+
+        toastBody.textContent = message;
+        const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+        toast.show();
+    }
+
+    function checkMealAndWorkoutReminders() {
+        const now = new Date();
+        const currentTime = now.toTimeString().slice(0, 5);
+        const todayKey = now.toISOString().slice(0, 10);
+
+        const reminders = [
+            { time: reminderSettings.breakfast, message: "🍳 Đã đến giờ ăn sáng rồi nhé!" },
+            { time: reminderSettings.lunch, message: "🍱 Đã đến giờ ăn trưa rồi nhé!" },
+            { time: reminderSettings.dinner, message: "🍽️ Đã đến giờ ăn tối rồi nhé!" },
+            { time: reminderSettings.workout, message: "🏃 Đã đến giờ vận động rồi nhé!" }
+        ];
+
+        reminders.forEach(item => {
+            if (!item.time) return;
+
+            const key = `${todayKey}_${item.time}_${item.message}`;
+            if (item.time === currentTime && !shownReminders.has(key)) {
+                showReminder(item.message);
+                shownReminders.add(key);
+            }
+        });
+    }
+
+    function startWaterReminders() {
+        if (!reminderSettings.waterEnabled) return;
+
+        const intervalMs = reminderSettings.waterInterval * 60 * 1000;
+
+        setInterval(() => {
+            showReminder("💧 Đừng quên uống nước nhé!");
+        }, intervalMs);
+    }
+
+    setInterval(checkMealAndWorkoutReminders, 30000);
+    checkMealAndWorkoutReminders();
+    startWaterReminders();
+});
+</script>
+{% endblock %}

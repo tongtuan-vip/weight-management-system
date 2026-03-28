@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Phân tích sức khỏe{% endblock %}
+
+{% block head_extra %}
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<style>
+    .health-wrap {
+        max-width: 1320px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="health-wrap">
+
+    {% if bmi is not none %}
+        {% if bmi < 18.5 %}
+            {% set health_note = "Bạn đang ở mức thiếu cân, nên ưu tiên tăng cường dinh dưỡng và tập tăng cơ." %}
+        {% elif bmi < 25 %}
+            {% set health_note = "Thể trạng hiện tại khá cân đối, hãy duy trì chế độ ăn và luyện tập ổn định." %}
+        {% elif bmi < 30 %}
+            {% set health_note = "Bạn đang ở mức thừa cân, nên tăng vận động và kiểm soát lượng calo nạp vào." %}
+        {% else %}
+            {% set health_note = "Bạn nên chú ý nhiều hơn đến sức khỏe, ưu tiên ăn uống khoa học và vận động đều đặn." %}
+        {% endif %}
+    {% else %}
+        {% set health_note = "Hãy cập nhật hồ sơ và nhập ít nhất một bản ghi cân nặng để hệ thống phân tích chính xác hơn." %}
+    {% endif %}
+
+    <div class="page-header header-blue mb-3">
+        <div class="row align-items-center g-2">
+            <div class="col-md-8">
+                <h1>Phân tích sức khỏe</h1>
+                <p>Đánh giá thể trạng, nhu cầu năng lượng và gợi ý bài tập, dinh dưỡng phù hợp.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="status-chip">Người dùng: {{ user.full_name }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if bmi is not none %}
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="metric-card h-100">
+                <div class="metric-top">
+                    <div class="metric-icon">⚖️</div>
+                    <div class="metric-label">BMI</div>
+                </div>
+                <div class="metric-value">{{ bmi }}</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="metric-card h-100">
+                <div class="metric-top">
+                    <div class="metric-icon">🧍</div>
+                    <div class="metric-label">Thể trạng</div>
+                </div>
+                <div class="metric-value">{{ status }}</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="metric-card h-100">
+                <div class="metric-top">
+                    <div class="metric-icon">🔥</div>
+                    <div class="metric-label">BMR</div>
+                </div>
+                <div class="metric-value">{{ bmr }} kcal</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="metric-card h-100">
+                <div class="metric-top">
+                    <div class="metric-icon">⚡</div>
+                    <div class="metric-label">TDEE</div>
+                </div>
+                <div class="metric-value">{{ tdee }} kcal</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="metric-card h-100">
+                <div class="metric-top">
+                    <div class="metric-icon">🎯</div>
+                    <div class="metric-label">Mục tiêu</div>
+                </div>
+                <div class="metric-value text-primary">{{ goal }}</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="metric-card h-100">
+                <div class="metric-top">
+                    <div class="metric-icon">🍽️</div>
+                    <div class="metric-label">Calo/ngày</div>
+                </div>
+                <div class="metric-value text-success">{{ target_calories }} kcal</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card section-card mb-3">
+                <div class="card-body">
+                    <div class="section-title">Thông tin sức khỏe hiện tại</div>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Họ và tên</div>
+                            <div class="info-value">{{ user.full_name }}</div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Email</div>
+                            <div class="info-value">{{ user.email }}</div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Chiều cao</div>
+                            <div class="info-value">
+                                {{ user.height or 'Chưa cập nhật' }}{% if user.height %} cm{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Cân nặng hiện tại</div>
+                            <div class="info-value">
+                                {{ latest_weight or 'Chưa cập nhật' }}{% if latest_weight %} kg{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Phân loại thể trạng</div>
+                            <div class="info-value">
+                                <span class="badge text-bg-info badge-health">{{ body_type }}</span>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Mức vận động</div>
+                            <div class="info-value">{{ user.activity_level or 'Chưa cập nhật' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="advice-box h-100">
+                        <div class="section-title">Gợi ý bài tập</div>
+                        <ul>
+                            {% for item in exercise %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="advice-box h-100">
+                        <div class="section-title">Gợi ý chế độ dinh dưỡng</div>
+                        <ul>
+                            {% for item in diet %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card section-card mb-3">
+                <div class="card-body">
+                    <div class="section-title">Khuyến nghị tổng quát</div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="summary-box">
+                                <div class="summary-title">Ngủ nghỉ</div>
+                                <div class="summary-value">
+                                    Cố gắng ngủ đủ 7–8 giờ mỗi ngày để cơ thể phục hồi và ổn định chuyển hóa.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="summary-box">
+                                <div class="summary-title">Uống nước</div>
+                                <div class="summary-value">
+                                    Duy trì uống đủ nước mỗi ngày, đặc biệt trước và sau khi vận động.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="summary-box">
+                                <div class="summary-title">Theo dõi tiến trình</div>
+                                <div class="summary-value">
+                                    Cập nhật cân nặng định kỳ 2–3 lần mỗi tuần để hệ thống phân tích chính xác hơn.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card section-card">
+                <div class="card-body">
+                    <div class="section-title">Thói quen tốt mỗi ngày</div>
+
+                    <div class="habit-grid">
+                        <div class="habit-card">
+                            <div class="habit-icon">💧</div>
+                            <div class="habit-title">Uống đủ nước</div>
+                            <p class="habit-text">Duy trì uống nước đều trong ngày để hỗ trợ trao đổi chất và vận động hiệu quả hơn.</p>
+                        </div>
+
+                        <div class="habit-card">
+                            <div class="habit-icon">🚶</div>
+                            <div class="habit-title">Vận động nhẹ nhàng</div>
+                            <p class="habit-text">Đi bộ 20–30 phút mỗi ngày sẽ giúp cơ thể duy trì năng lượng và cải thiện sức khỏe tim mạch.</p>
+                        </div>
+
+                        <div class="habit-card">
+                            <div class="habit-icon">🥗</div>
+                            <div class="habit-title">Ăn uống điều độ</div>
+                            <p class="habit-text">Ưu tiên thực phẩm tươi, rau xanh, protein tốt và hạn chế đồ ngọt hoặc đồ chiên nhiều dầu.</p>
+                        </div>
+
+                        <div class="habit-card">
+                            <div class="habit-icon">🛌</div>
+                            <div class="habit-title">Ngủ đúng giờ</div>
+                            <p class="habit-text">Ngủ đủ và đúng giờ giúp cân bằng hormone, hỗ trợ kiểm soát cân nặng và phục hồi cơ thể.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card section-card mb-3">
+                <div class="card-body">
+                    <div class="section-title">Mô hình 3D thể trạng</div>
+                    <p class="small-muted mb-2">Phân loại hiện tại: <strong>{{ body_type }}</strong></p>
+
+                    {% if model_file %}
+                    <div class="model-box">
+                        <model-viewer
+                            src="{{ model_file }}"
+                            alt="Mô hình 3D thể trạng"
+                            auto-rotate
+                            camera-controls
+                            shadow-intensity="1"
+                            exposure="1"
+                            interaction-prompt="auto">
+                        </model-viewer>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-secondary mb-0">
+                        Chưa có mô hình 3D phù hợp.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card section-card">
+                <div class="card-body">
+                    <div class="section-title">Tóm tắt sức khỏe</div>
+
+                    <div class="summary-box">
+                        <div class="summary-title">Nhận xét nhanh</div>
+                        <div class="summary-value">{{ health_note }}</div>
+                    </div>
+
+                    <div class="summary-box">
+                        <div class="summary-title">Calo khuyến nghị</div>
+                        <div class="summary-value">{{ target_calories }} kcal / ngày</div>
+                    </div>
+
+                    <div class="summary-box">
+                        <div class="summary-title">Mục tiêu hiện tại</div>
+                        <div class="summary-value">{{ goal }}</div>
+                    </div>
+
+                    <div class="quote-box">
+                        <div class="summary-title">Lời nhắc</div>
+                        <div class="summary-value">
+                            Sức khỏe tốt đến từ việc duy trì thói quen nhỏ nhưng đều đặn mỗi ngày.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
