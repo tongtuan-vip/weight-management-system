@@ -1,9 +1,16 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = "mysql+pymysql://root:@localhost/weight_management"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "mysql+pymysql://root:@localhost/weight_management"
+)
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True
+)
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -13,7 +20,6 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
-# 🔥 THÊM ĐOẠN NÀY
 def get_db():
     db = SessionLocal()
     try:
