@@ -6,58 +6,104 @@
 <style>
     .ai-chat-wrap {
         max-width: 1500px;
+        margin: 0 auto;
     }
 
-    .ai-main-card {
-        border-radius: 22px;
-        border: 1px solid var(--border-color);
-        background: var(--bg-card);
-        box-shadow: var(--shadow-soft);
-        height: calc(100vh - 210px);
-        min-height: 640px;
-    }
-
-    .ai-main-card .card-body {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        padding: 20px;
-    }
-
-    .ai-top-tools {
+    .ai-page-head {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 14px;
+        gap: 12px;
+        margin-bottom: 12px;
+        padding: 8px 4px 2px;
+    }
+
+    .ai-page-head h1 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .ai-page-head p {
+        margin: 4px 0 0;
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .ai-coach-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #1d4ed8, #10b981);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .ai-shell {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 140px);
+        min-height: 620px;
+        border: 1px solid var(--border-color);
+        border-radius: 22px;
+        background: var(--bg-card);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+    }
+
+    .ai-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 14px 18px 10px;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(255,255,255,0.55);
         flex-shrink: 0;
+    }
+
+    html[data-theme="dark"] .ai-toolbar {
+        background: rgba(255,255,255,0.02);
+    }
+
+    .ai-toolbar-left {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ai-toolbar-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 10px;
     }
 
     .ai-suggestion-bar {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         flex-wrap: wrap;
-        margin-bottom: 14px;
-        flex-shrink: 0;
     }
 
     .quick-chip {
-        border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.45);
+        border: 1px solid var(--border-color);
+        background: var(--bg-soft);
         color: var(--text-muted);
         border-radius: 999px;
-        padding: 10px 16px;
-        font-size: 14px;
-        line-height: 1.4;
+        padding: 8px 14px;
+        font-size: 13px;
+        line-height: 1.35;
         cursor: pointer;
-        transition: all 0.2s ease;
-        backdrop-filter: blur(4px);
+        transition: all 0.18s ease;
+        white-space: nowrap;
     }
 
     .quick-chip:hover {
         color: var(--text-main);
-        background: var(--bg-soft);
         transform: translateY(-1px);
         box-shadow: var(--shadow-light);
     }
@@ -65,8 +111,8 @@
     .quick-chip.primary {
         background: rgba(25, 135, 84, 0.10);
         color: #198754;
-        border: 1px solid rgba(25, 135, 84, 0.18);
-        font-weight: 600;
+        border-color: rgba(25, 135, 84, 0.18);
+        font-weight: 700;
     }
 
     .quick-chip.primary:hover {
@@ -74,20 +120,22 @@
         color: #146c43;
     }
 
+    .ai-toolbar-right {
+        flex-shrink: 0;
+    }
+
     .ai-chat-box {
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        padding: 16px;
-        border-radius: 18px;
-        background: var(--bg-soft);
-        border: 1px solid var(--border-color);
-        margin-bottom: 12px;
+        padding: 20px 18px 8px;
+        background: var(--bg-card);
+        scroll-behavior: smooth;
     }
 
     .chat-row {
         display: flex;
-        margin-bottom: 14px;
+        margin-bottom: 16px;
     }
 
     .chat-row.user {
@@ -99,25 +147,25 @@
     }
 
     .chat-bubble {
-        max-width: 84%;
+        max-width: min(880px, 86%);
         border-radius: 18px;
         padding: 14px 16px;
-        line-height: 1.7;
-        position: relative;
+        line-height: 1.75;
         word-break: break-word;
+        position: relative;
     }
 
     .chat-row.user .chat-bubble {
         background: #dbeafe;
         color: #1e3a8a;
-        border-bottom-right-radius: 6px;
+        border-bottom-right-radius: 8px;
     }
 
     .chat-row.ai .chat-bubble {
-        background: var(--bg-card);
+        background: var(--bg-soft);
         color: var(--text-main);
         border: 1px solid var(--border-color);
-        border-bottom-left-radius: 6px;
+        border-bottom-left-radius: 8px;
     }
 
     html[data-theme="dark"] .chat-row.user .chat-bubble {
@@ -129,7 +177,7 @@
         font-size: 12px;
         font-weight: 700;
         margin-bottom: 6px;
-        opacity: 0.8;
+        opacity: 0.75;
     }
 
     .chat-actions {
@@ -152,9 +200,26 @@
         text-decoration: underline;
     }
 
+    .empty-chat {
+        height: 100%;
+        min-height: 220px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: var(--text-muted);
+        padding: 30px 20px;
+    }
+
+    .empty-chat .empty-icon {
+        font-size: 42px;
+        margin-bottom: 10px;
+    }
+
     .typing-box {
         display: none;
-        margin: 0 0 10px 0;
+        padding: 0 18px 10px;
         font-size: 13px;
         color: var(--text-muted);
         font-style: italic;
@@ -180,30 +245,53 @@
         40% { opacity: 1; }
     }
 
+    .ai-input-area {
+        padding: 12px 18px 16px;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-card);
+        flex-shrink: 0;
+    }
+
     .ai-input-wrap {
         display: flex;
         gap: 10px;
-        align-items: stretch;
-        flex-shrink: 0;
-        margin-top: auto;
+        align-items: flex-end;
     }
 
     .ai-input-wrap .form-control {
-        border-radius: 14px;
-        min-height: 54px;
+        border-radius: 18px;
+        min-height: 56px;
+        max-height: 140px;
+        resize: none;
         font-size: 15px;
+        padding: 15px 18px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-soft);
+        box-shadow: none;
     }
 
-    .ai-input-wrap .btn {
-        min-width: 140px;
-        border-radius: 14px;
+    .ai-input-wrap .form-control:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.16rem rgba(13,110,253,0.12);
+        background: var(--bg-card);
+    }
+
+    .send-btn {
+        min-width: 110px;
+        height: 56px;
+        border-radius: 16px;
         font-weight: 700;
+        padding: 0 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .empty-chat {
-        text-align: center;
+    .input-note {
+        margin-top: 8px;
+        font-size: 12px;
         color: var(--text-muted);
-        padding: 50px 20px;
+        padding-left: 4px;
     }
 
     .chat-markdown p {
@@ -251,46 +339,82 @@
         color: inherit;
     }
 
-    @media (max-width: 1100px) {
-        .ai-main-card {
-            height: auto;
-            min-height: unset;
+    @media (max-width: 992px) {
+        .ai-shell {
+            height: calc(100vh - 120px);
+            min-height: 560px;
         }
 
-        .ai-main-card .card-body {
-            height: auto;
+        .ai-toolbar {
+            flex-direction: column;
+            align-items: stretch;
         }
 
-        .ai-chat-box {
-            height: 430px;
-            flex: unset;
+        .ai-toolbar-right {
+            align-self: flex-end;
         }
     }
 
     @media (max-width: 768px) {
-        .chat-bubble {
-            max-width: 92%;
-        }
-
-        .ai-input-wrap {
+        .ai-page-head {
+            align-items: flex-start;
             flex-direction: column;
         }
 
-        .ai-input-wrap .btn {
-            width: 100%;
+        .ai-page-head h1 {
+            font-size: 26px;
+        }
+
+        .ai-shell {
+            height: calc(100vh - 110px);
+            min-height: 520px;
+            border-radius: 18px;
+        }
+
+        .ai-toolbar {
+            padding: 12px 14px 10px;
         }
 
         .ai-chat-box {
-            height: 380px;
+            padding: 16px 14px 8px;
         }
 
-        .ai-suggestion-bar {
+        .chat-bubble {
+            max-width: 94%;
+        }
+
+        .ai-input-area {
+            padding: 10px 14px 14px;
+        }
+
+        .ai-input-wrap {
             gap: 8px;
         }
 
+        .send-btn {
+            min-width: 88px;
+            height: 54px;
+        }
+
+        .ai-suggestion-bar {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
         .quick-chip {
-            font-size: 13px;
-            padding: 9px 14px;
+            flex: 0 0 auto;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .ai-input-wrap {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .send-btn {
+            width: 100%;
         }
     }
 </style>
@@ -298,84 +422,88 @@
 
 {% block content %}
 <div class="ai-chat-wrap">
-    <div class="page-header header-blue mb-3">
-        <div class="row align-items-center g-2">
-            <div class="col-md-8">
-                <h1>Trợ lý AI</h1>
-                <p>Hỏi về sức khỏe, cân nặng, dinh dưỡng và luyện tập theo hồ sơ của bạn.</p>
-            </div>
-            <div class="col-md-4 text-md-end">
-                <span class="status-chip">AI Coach</span>
-            </div>
+    <div class="ai-page-head">
+        <div>
+            <h1>Trợ lý AI</h1>
+            <p>Hỏi về sức khỏe, cân nặng, dinh dưỡng và luyện tập theo hồ sơ của bạn.</p>
         </div>
+        <span class="ai-coach-badge">AI Coach</span>
     </div>
 
-    <div class="card ai-main-card">
-        <div class="card-body">
-            <div class="ai-top-tools">
-                <div class="section-title mb-0">Cuộc trò chuyện</div>
+    <div class="ai-shell">
+        <div class="ai-toolbar">
+            <div class="ai-toolbar-left">
+                <div class="ai-toolbar-title">Cuộc trò chuyện</div>
+
+                <div class="ai-suggestion-bar">
+                    <div class="quick-chip" onclick="setQuickQuestion('Tôi nên ăn bao nhiêu calo mỗi ngày?')">
+                        🔥 Tôi nên ăn bao nhiêu calo mỗi ngày?
+                    </div>
+                    <div class="quick-chip" onclick="setQuickQuestion('BMI của tôi có ổn không?')">
+                        📊 BMI của tôi có ổn không?
+                    </div>
+                    <div class="quick-chip" onclick="setQuickQuestion('Làm sao để duy trì cân nặng ổn định?')">
+                        ⚖️ Làm sao để duy trì cân nặng ổn định?
+                    </div>
+                    <div class="quick-chip" onclick="setQuickQuestion('Tôi nên tập gì để giảm mỡ?')">
+                        🏃 Tôi nên tập gì để giảm mỡ?
+                    </div>
+                    <div class="quick-chip primary" onclick="generateMealPlan()">
+                        📋 Gợi ý thực đơn 1 ngày
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-toolbar-right">
                 <button class="btn btn-outline-danger btn-sm" onclick="clearChat()">Xóa toàn bộ</button>
             </div>
+        </div>
 
-            <div class="ai-suggestion-bar">
-                <div class="quick-chip" onclick="setQuickQuestion('Tôi nên ăn bao nhiêu calo mỗi ngày?')">
-                    🔥 Tôi nên ăn bao nhiêu calo mỗi ngày?
-                </div>
-                <div class="quick-chip" onclick="setQuickQuestion('BMI của tôi có ổn không?')">
-                    📊 BMI của tôi có ổn không?
-                </div>
-                <div class="quick-chip" onclick="setQuickQuestion('Làm sao để duy trì cân nặng ổn định?')">
-                    ⚖️ Làm sao để duy trì cân nặng ổn định?
-                </div>
-                <div class="quick-chip" onclick="setQuickQuestion('Tôi nên tập gì để giảm mỡ?')">
-                    🏃 Tôi nên tập gì để giảm mỡ?
-                </div>
-                <div class="quick-chip primary" onclick="generateMealPlan()">
-                    📋 Gợi ý thực đơn 1 ngày
-                </div>
-            </div>
+        <div id="chatBox" class="ai-chat-box">
+            {% if messages and messages|length > 0 %}
+                {% for msg in messages %}
+                    <div class="chat-row {% if msg.role == 'user' %}user{% else %}ai{% endif %}" id="msg-{{ msg.id }}">
+                        <div class="chat-bubble">
+                            <div class="chat-role">
+                                {% if msg.role == 'user' %}Bạn{% else %}AI{% endif %}
+                            </div>
 
-            <div id="chatBox" class="ai-chat-box">
-                {% if messages and messages|length > 0 %}
-                    {% for msg in messages %}
-                        <div class="chat-row {% if msg.role == 'user' %}user{% else %}ai{% endif %}" id="msg-{{ msg.id }}">
-                            <div class="chat-bubble">
-                                <div class="chat-role">
-                                    {% if msg.role == 'user' %}Bạn{% else %}AI{% endif %}
-                                </div>
+                            <div class="chat-markdown">{{ msg.rendered_content | safe }}</div>
 
-                                <div class="chat-markdown">{{ msg.rendered_content | safe }}</div>
-
-                                <div class="chat-actions">
-                                    <button class="chat-delete-btn" onclick="deleteMessage({{ msg.id }})">Xóa</button>
-                                </div>
+                            <div class="chat-actions">
+                                <button class="chat-delete-btn" onclick="deleteMessage({{ msg.id }})">Xóa</button>
                             </div>
                         </div>
-                    {% endfor %}
-                {% else %}
-                    <div id="emptyChat" class="empty-chat">
-                        <div class="mb-2">🤖</div>
-                        <div>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện với AI.</div>
                     </div>
-                {% endif %}
-            </div>
+                {% endfor %}
+            {% else %}
+                <div id="emptyChat" class="empty-chat">
+                    <div class="empty-icon">🤖</div>
+                    <div>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện với AI.</div>
+                </div>
+            {% endif %}
+        </div>
 
-            <div id="typingBox" class="typing-box">
-                AI đang suy nghĩ
-                <span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
-            </div>
+        <div id="typingBox" class="typing-box">
+            AI đang suy nghĩ
+            <span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
+        </div>
 
+        <div class="ai-input-area">
             <form id="chatForm" class="ai-input-wrap">
-                <input
-                    type="text"
+                <textarea
                     id="messageInput"
                     name="message"
                     class="form-control"
-                    placeholder="Nhập câu hỏi của bạn..."
+                    rows="1"
+                    placeholder="Hỏi về BMI, calo, dinh dưỡng, bài tập..."
                     required
-                >
-                <button type="submit" class="btn btn-success">Gửi</button>
+                ></textarea>
+                <button type="submit" class="btn btn-success send-btn">Gửi</button>
             </form>
+            <div class="input-note">
+                AI chỉ hỗ trợ thông tin sức khỏe phổ thông, không thay thế bác sĩ.
+            </div>
         </div>
     </div>
 </div>
@@ -384,8 +512,15 @@
 {% block scripts %}
 <script>
     function setQuickQuestion(text) {
-        document.getElementById("messageInput").value = text;
-        document.getElementById("messageInput").focus();
+        const input = document.getElementById("messageInput");
+        input.value = text;
+        autoResizeTextarea(input);
+        input.focus();
+    }
+
+    function autoResizeTextarea(el) {
+        el.style.height = "auto";
+        el.style.height = Math.min(el.scrollHeight, 140) + "px";
     }
 
     function createMessageElement(role, htmlContent, messageId = null) {
@@ -455,7 +590,7 @@
                 if (!chatBox.querySelector(".chat-row")) {
                     chatBox.innerHTML = `
                         <div id="emptyChat" class="empty-chat">
-                            <div class="mb-2">🤖</div>
+                            <div class="empty-icon">🤖</div>
                             <div>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện với AI.</div>
                         </div>
                     `;
@@ -482,7 +617,7 @@
             if (res.ok && data.success) {
                 document.getElementById("chatBox").innerHTML = `
                     <div id="emptyChat" class="empty-chat">
-                        <div class="mb-2">🤖</div>
+                        <div class="empty-icon">🤖</div>
                         <div>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện với AI.</div>
                     </div>
                 `;
@@ -505,7 +640,9 @@
 
         const userHtml = message.replace(/\n/g, "<br>");
         appendMessage("user", userHtml);
+
         input.value = "";
+        input.style.height = "56px";
         input.focus();
         typingBox.style.display = "block";
 
@@ -540,7 +677,23 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         const chatBox = document.getElementById("chatBox");
+        const input = document.getElementById("messageInput");
+
         if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+        if (input) {
+            autoResizeTextarea(input);
+
+            input.addEventListener("input", function() {
+                autoResizeTextarea(this);
+            });
+
+            input.addEventListener("keydown", function(e) {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    document.getElementById("chatForm").requestSubmit();
+                }
+            });
+        }
     });
 
     async function generateMealPlan() {

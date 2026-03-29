@@ -15,3 +15,5 @@ markdown
 python-dotenv
 google-genai
 itsdangerous
+passlib[bcrypt]
+bcrypt

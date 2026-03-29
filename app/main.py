@@ -2,6 +2,13 @@ from dotenv import load_dotenv
 import os
 from google import genai
 
+from fastapi import Request, Form, Depends
+from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
+
+from models import User
+from security import hash_password
+from database import get_db
 from fastapi import FastAPI, Request, Form, Depends
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -146,76 +153,82 @@ def healthz():
 
 @app.get("/register")
 def register_page(request: Request):
-    return templates.TemplateResponse(
-        request,
-        "register.html",
-        {"message": ""}
-    )
+    return templates.TemplateResponse("register.html", {"request": request})
+
 
 @app.post("/register")
-def register_user(
+def register(
     request: Request,
     full_name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    existing_user = db.query(User).filter(User.email == email).first()
+    full_name = full_name.strip()
+    email = email.strip().lower()
+    password = password.strip()
 
+    if len(password) < 8:
+        return templates.TemplateResponse("register.html", {
+            "request": request,
+            "message": "Mật khẩu phải có ít nhất 8 ký tự."
+        })
+
+    existing_user = db.query(User).filter(User.email == email).first()
     if existing_user:
-        return templates.TemplateResponse(
-        request,
-    "register.html",
-    {"message": "Email đã tồn tại!"}
-)
+        return templates.TemplateResponse("register.html", {
+            "request": request,
+            "message": "Email này đã được sử dụng."
+        })
 
     new_user = User(
         full_name=full_name,
         email=email,
-        password=password
+        password=hash_password(password)
     )
 
     db.add(new_user)
     db.commit()
 
-    return templates.TemplateResponse(
-       request,
-        "login.html",
-        { "message": "Đăng ký thành công! Hãy đăng nhập."}
-    )
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "message": "Đăng ký thành công! Hãy đăng nhập."
+    })
 
+from security import verify_password
 
 @app.get("/login")
 def login_page(request: Request):
-    return templates.TemplateResponse(
-        request,
-        "login.html",
-        { "message": ""}
-    )
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @app.post("/login")
-def login_user(
+def login(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(
-        User.email == email,
-        User.password == password
-    ).first()
+    email = email.strip().lower()
+    password = password.strip()
+
+    user = db.query(User).filter(User.email == email).first()
 
     if not user:
-        return templates.TemplateResponse(
-            request,
-            "login.html",
-            { "message": "Sai email hoặc mật khẩu!"}
-        )
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "message": "Email hoặc mật khẩu không đúng."
+        })
+
+    if not verify_password(password, user.password):
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "message": "Email hoặc mật khẩu không đúng."
+        })
 
     request.session["user_id"] = user.id
-    return RedirectResponse(url="/dashboard", status_code=302)
 
+    return RedirectResponse(url="/dashboard", status_code=302)
 
 @app.get("/profile")
 def profile_page(request: Request, db: Session = Depends(get_db)):
