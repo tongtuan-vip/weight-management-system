@@ -1,35 +1,25 @@
 from dotenv import load_dotenv
 import os
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+gemini_client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
 from google import genai
+
+from fastapi import FastAPI, Request, Form, Depends
 from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi import Request, Form, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import desc, asc
-from app.models import ReminderSettings
-
-
-from app.models import ChatMessage, User, WeightRecord
-from app.database import get_db
-load_dotenv()
-
-gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-from fastapi import FastAPI, Request, Depends, Form
-from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+
 from sqlalchemy.orm import Session
+from sqlalchemy import desc, asc
 from starlette.middleware.sessions import SessionMiddleware
 from datetime import date, timedelta
-
-
 
 from sklearn.linear_model import LinearRegression
 import numpy as np
 import markdown
 
-from app.database import SessionLocal, engine, Base
-from app.models import User, WeightRecord
-from datetime import date, timedelta
+from app.database import get_db, engine, Base
+from app.models import ChatMessage, User, WeightRecord, ReminderSettings
 def suggest_default_reminder_times(wake_up_time=None, goal=None):
     breakfast = "07:00"
     lunch = "12:00"
@@ -117,20 +107,15 @@ def calculate_tdee(bmr, activity_level):
 
 app = FastAPI()
 
-app.add_middleware(SessionMiddleware, secret_key="my_secret_key_123")
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SESSION_SECRET", "dev_secret_key")
+)
 
 Base.metadata.create_all(bind=engine)
 
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def get_latest_weight_record(db: Session, user_id: int):
@@ -149,7 +134,9 @@ def home(request: Request):
         "index.html",
         {"request": request, "user_id": user_id}
     )
-
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
 
 @app.get("/register")
 def register_page(request: Request):
@@ -970,6 +957,7 @@ Lịch sử hội thoại gần đây:
 Câu hỏi mới của người dùng:
 {message}
 """
+    
 
     try:
         response = gemini_client.models.generate_content(
