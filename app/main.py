@@ -151,7 +151,9 @@ def healthz():
 
 @app.get("/register")
 def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+    return templates.TemplateResponse(
+        request,
+        "register.html")
 
 
 @app.post("/register")
@@ -167,15 +169,19 @@ def register(
     password = password.strip()
 
     if len(password) < 8:
-        return templates.TemplateResponse("register.html", {
-            "request": request,
+        return templates.TemplateResponse(
+            request,
+             "register.html", {
+           
             "message": "Mật khẩu phải có ít nhất 8 ký tự."
         })
 
     existing_user = db.query(User).filter(User.email == email).first()
     if existing_user:
-        return templates.TemplateResponse("register.html", {
-            "request": request,
+        return templates.TemplateResponse(
+            request,
+             "register.html", {
+           
             "message": "Email này đã được sử dụng."
         })
 
@@ -188,8 +194,10 @@ def register(
     db.add(new_user)
     db.commit()
 
-    return templates.TemplateResponse("login.html", {
-        "request": request,
+    return templates.TemplateResponse(
+        request,
+         "login.html", {
+        
         "message": "Đăng ký thành công! Hãy đăng nhập."
     })
 
@@ -197,7 +205,9 @@ from app.security import verify_password
 
 @app.get("/login")
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(
+        request,
+         "login.html")
 
 
 @app.post("/login")
@@ -213,14 +223,18 @@ def login(
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
-        return templates.TemplateResponse("login.html", {
-            "request": request,
+        return templates.TemplateResponse(
+            request,
+             "login.html", {
+          
             "message": "Email hoặc mật khẩu không đúng."
         })
 
     if not verify_password(password, user.password):
-        return templates.TemplateResponse("login.html", {
-            "request": request,
+        return templates.TemplateResponse(
+           request,
+           "login.html", {
+           
             "message": "Email hoặc mật khẩu không đúng."
         })
 
