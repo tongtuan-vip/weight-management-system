@@ -6,156 +6,495 @@
     <title>Weight Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --green-1: #0f9d58;
+            --green-2: #20c997;
+            --green-3: #e9fbf3;
+            --green-4: #dcf7ea;
+            --dark: #16211d;
+            --gray: #5f6f67;
+            --white: #ffffff;
+            --shadow: 0 18px 50px rgba(15, 60, 40, 0.10);
+            --radius-xl: 28px;
+            --radius-lg: 22px;
+            --radius-md: 18px;
+        }
+
         body {
-            background: #f4f7fb;
+            margin: 0;
             font-family: Arial, sans-serif;
-            color: #212529;
+            background:
+                radial-gradient(circle at top left, rgba(32, 201, 151, 0.12), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(15, 157, 88, 0.10), transparent 24%),
+                linear-gradient(180deg, #f6fffa 0%, #f4f7fb 100%);
+            color: var(--dark);
         }
 
-        .hero {
-            background: linear-gradient(135deg, #198754, #20c997);
-            color: white;
-            border-radius: 24px;
-            padding: 48px 40px;
-            box-shadow: 0 12px 36px rgba(0,0,0,0.08);
+        a {
+            text-decoration: none;
         }
 
-        .hero h1 {
-            font-size: 42px;
-            font-weight: 700;
-            line-height: 1.2;
+        .navbar-custom {
+            padding: 18px 0;
         }
 
-        .hero p {
-            font-size: 17px;
-            opacity: 0.96;
-            margin-top: 16px;
-            margin-bottom: 24px;
+        .brand {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--green-1);
+            letter-spacing: 0.3px;
         }
 
-        .btn-hero {
+        .nav-btn {
             border-radius: 14px;
-            padding: 12px 18px;
+            padding: 10px 18px;
             font-weight: 600;
         }
 
-        .section-title {
-            font-size: 28px;
+        .hero {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #11995a 0%, #1dbf86 55%, #3ad7a2 100%);
+            border-radius: 34px;
+            padding: 70px 52px;
+            color: white;
+            box-shadow: 0 20px 50px rgba(20, 115, 80, 0.18);
+        }
+
+        .hero::before,
+        .hero::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            z-index: 0;
+        }
+
+        .hero::before {
+            width: 260px;
+            height: 260px;
+            top: -80px;
+            right: -60px;
+        }
+
+        .hero::after {
+            width: 180px;
+            height: 180px;
+            bottom: -50px;
+            left: 45%;
+        }
+
+        .hero-content,
+        .hero-card {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.16);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 13px;
             font-weight: 700;
             margin-bottom: 18px;
         }
 
-        .feature-card {
+        .hero h1 {
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 18px;
+        }
+
+        .hero p {
+            font-size: 17px;
+            line-height: 1.8;
+            color: rgba(255,255,255,0.94);
+            max-width: 620px;
+            margin-bottom: 28px;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .btn-main {
+            background: white;
+            color: var(--green-1);
             border: none;
-            border-radius: 18px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            padding: 13px 22px;
+            border-radius: 16px;
+            font-weight: 700;
+            transition: 0.25s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        }
+
+        .btn-main:hover {
+            transform: translateY(-2px);
+            background: #f8fffb;
+            color: #0c8348;
+        }
+
+        .btn-ghost {
+            color: white;
+            border: 1.5px solid rgba(255,255,255,0.5);
+            padding: 13px 22px;
+            border-radius: 16px;
+            font-weight: 700;
+            background: transparent;
+            transition: 0.25s ease;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255,255,255,0.12);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .hero-card {
+            background: rgba(255,255,255,0.96);
+            border-radius: 26px;
+            padding: 28px 26px;
+            color: var(--dark);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+        }
+
+        .hero-card-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 18px;
+            color: #155f3e;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #eef2f1;
+            font-size: 15px;
+            color: #31413a;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .feature-check {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #17b46d, #35d4a0);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 1px;
+        }
+
+        .section {
+            padding: 80px 0 10px;
+        }
+
+        .section-label {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--green-1);
+            background: var(--green-3);
+            padding: 8px 14px;
+            border-radius: 999px;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 34px;
+            font-weight: 800;
+            margin-bottom: 14px;
+            color: var(--dark);
+        }
+
+        .section-subtitle {
+            color: var(--gray);
+            font-size: 16px;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        .feature-card {
             height: 100%;
+            background: rgba(255,255,255,0.92);
+            border: 1px solid #edf4f1;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            transition: 0.28s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
         }
 
         .feature-card .card-body {
-            padding: 24px;
+            padding: 26px;
         }
 
-        .feature-icon {
-            font-size: 30px;
-            margin-bottom: 12px;
+        .icon-wrap {
+            width: 62px;
+            height: 62px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #eafff4, #d8f7e9);
+            font-size: 28px;
+            margin-bottom: 18px;
         }
 
         .feature-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 8px;
+            font-size: 19px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--dark);
         }
 
         .feature-text {
-            color: #6c757d;
+            color: var(--gray);
+            font-size: 15px;
+            line-height: 1.75;
             margin-bottom: 0;
-            font-size: 14px;
         }
 
-        .info-box {
+        .stats-row {
+            margin-top: 26px;
+        }
+
+        .stat-box {
             background: white;
-            border-radius: 18px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-            padding: 28px;
+            border-radius: 22px;
+            padding: 28px 24px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid #edf4f1;
+            height: 100%;
         }
 
-        .badge-soft {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: rgba(255,255,255,0.18);
-            font-size: 13px;
-            font-weight: 600;
+        .stat-number {
+            font-size: 34px;
+            font-weight: 800;
+            color: var(--green-1);
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 15px;
+            margin-bottom: 0;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid #edf4f1;
+            height: 100%;
+        }
+
+        .info-card h4 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 14px;
+            color: var(--dark);
+        }
+
+        .info-card p {
+            color: var(--gray);
+            margin-bottom: 0;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .cta-box {
+            margin-top: 80px;
+            background: linear-gradient(135deg, #103d2c, #1b6c4d);
+            border-radius: 30px;
+            padding: 42px 34px;
+            color: white;
+            box-shadow: 0 16px 40px rgba(12, 48, 33, 0.16);
+        }
+
+        .cta-box h3 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .cta-box p {
+            color: rgba(255,255,255,0.88);
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 0;
         }
 
         .footer-note {
-            color: #6c757d;
+            text-align: center;
+            color: #7a8b83;
             font-size: 14px;
+            padding: 28px 0 10px;
         }
 
         @media (max-width: 991px) {
             .hero {
-                padding: 32px 24px;
+                padding: 42px 24px;
+                border-radius: 28px;
             }
 
             .hero h1 {
-                font-size: 32px;
+                font-size: 36px;
             }
 
             .hero p {
                 font-size: 15px;
             }
+
+            .section {
+                padding-top: 64px;
+            }
+
+            .section-title {
+                font-size: 28px;
+            }
+
+            .cta-box h3 {
+                font-size: 26px;
+            }
+        }
+
+        @media (max-width: 575px) {
+            .hero h1 {
+                font-size: 30px;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+            }
+
+            .btn-main,
+            .btn-ghost {
+                width: 100%;
+                text-align: center;
+            }
+
+            .hero-card {
+                padding: 22px 18px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container py-4">
+    <div class="container py-3 py-lg-4">
+
+        <!-- Navbar -->
+        <div class="navbar-custom d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="brand">⚖️ Weight Management</div>
+            <div class="d-flex gap-2">
+                <a href="/login" class="btn btn-outline-success nav-btn">Đăng nhập</a>
+                <a href="/register" class="btn btn-success nav-btn">Đăng ký</a>
+            </div>
+        </div>
 
         <!-- Hero -->
-        <div class="hero mb-5">
+        <section class="hero mt-2">
             <div class="row align-items-center g-4">
-                <div class="col-lg-7">
-                    <span class="badge-soft mb-3">Đồ án tốt nghiệp · Hệ thống quản lý cân nặng</span>
-                    <h1>Weight Management System</h1>
+                <div class="col-lg-7 hero-content">
+                    <div class="hero-badge">Đồ án tốt nghiệp · Ứng dụng AI trong quản lý cân nặng</div>
+                    <h1>Hệ thống quản lý cân nặng thông minh hỗ trợ theo dõi và dự đoán sức khỏe</h1>
                     <p>
-                        Hệ thống hỗ trợ theo dõi cân nặng, dự đoán xu hướng thay đổi cân nặng,
-                        phân tích sức khỏe và gợi ý bài tập, chế độ dinh dưỡng phù hợp dựa trên dữ liệu cá nhân.
+                        Ứng dụng giúp người dùng theo dõi lịch sử cân nặng, dự đoán xu hướng thay đổi
+                        trong 7 và 30 ngày, phân tích các chỉ số sức khỏe quan trọng và đưa ra gợi ý
+                        bài tập, dinh dưỡng phù hợp với từng thể trạng.
                     </p>
 
-                    <div class="d-flex gap-3 flex-wrap">
-                        <a href="/login" class="btn btn-light btn-hero">Đăng nhập</a>
-                        <a href="/register" class="btn btn-outline-light btn-hero">Đăng ký</a>
+                    <div class="hero-actions">
+                        <a href="/login" class="btn-main">Bắt đầu ngay</a>
+                        <a href="/register" class="btn-ghost">Tạo tài khoản</a>
                     </div>
                 </div>
 
                 <div class="col-lg-5">
-                    <div class="info-box">
-                        <h4 class="mb-3">Các chức năng chính</h4>
-                        <ul class="mb-0">
-                            <li class="mb-2">Theo dõi lịch sử cân nặng theo thời gian</li>
-                            <li class="mb-2">Dự đoán cân nặng sau 7 ngày và 30 ngày</li>
-                            <li class="mb-2">Phân tích BMI, BMR, TDEE</li>
-                            <li class="mb-2">Gợi ý bài tập theo thể trạng</li>
-                            <li class="mb-2">Gợi ý dinh dưỡng theo mục tiêu</li>
-                            <li>Mô hình 3D thể hiện tạng người</li>
+                    <div class="hero-card">
+                        <div class="hero-card-title">Các chức năng chính</div>
+                        <ul class="feature-list">
+                            <li>
+                                <span class="feature-check">✓</span>
+                                <span>Theo dõi và lưu trữ lịch sử cân nặng theo thời gian</span>
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                <span>Dự đoán xu hướng cân nặng sau 7 ngày và 30 ngày bằng AI</span>
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                <span>Phân tích các chỉ số sức khỏe như BMI, BMR, TDEE</span>
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                <span>Gợi ý bài tập phù hợp theo thể trạng và mục tiêu</span>
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                <span>Đề xuất chế độ dinh dưỡng theo nhu cầu cá nhân</span>
+                            </li>
+                            <li>
+                                <span class="feature-check">✓</span>
+                                <span>Hiển thị mô hình 3D mô phỏng tạng người trực quan</span>
+                            </li>
                         </ul>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Features -->
-        <div class="mb-4">
-            <div class="section-title text-center">Tính năng nổi bật</div>
-            <div class="row g-4">
+        <section class="section text-center">
+            <div class="section-label">TÍNH NĂNG NỔI BẬT</div>
+            <div class="section-title">Giải pháp hỗ trợ quản lý cân nặng toàn diện</div>
+            <p class="section-subtitle">
+                Không chỉ lưu dữ liệu cân nặng, hệ thống còn phân tích sức khỏe, dự đoán xu hướng
+                tương lai và hỗ trợ người dùng xây dựng kế hoạch cải thiện thể trạng khoa học hơn.
+            </p>
+
+            <div class="row g-4 mt-4">
                 <div class="col-md-6 col-lg-3">
                     <div class="card feature-card">
                         <div class="card-body">
-                            <div class="feature-icon">⚖️</div>
+                            <div class="icon-wrap">⚖️</div>
                             <div class="feature-title">Theo dõi cân nặng</div>
                             <p class="feature-text">
-                                Lưu lại các mốc cân nặng, hiển thị bảng lịch sử và biểu đồ trực quan.
+                                Ghi nhận các mốc cân nặng, hiển thị lịch sử chi tiết và trực quan hóa
+                                bằng biểu đồ để người dùng dễ theo dõi tiến trình thay đổi cơ thể.
                             </p>
                         </div>
                     </div>
@@ -164,10 +503,11 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="card feature-card">
                         <div class="card-body">
-                            <div class="feature-icon">🤖</div>
+                            <div class="icon-wrap">🤖</div>
                             <div class="feature-title">Dự đoán bằng AI</div>
                             <p class="feature-text">
-                                Sử dụng mô hình học máy để dự đoán xu hướng cân nặng trong tương lai.
+                                Ứng dụng mô hình học máy để dự đoán cân nặng trong tương lai,
+                                giúp người dùng có cái nhìn sớm về xu hướng thay đổi của bản thân.
                             </p>
                         </div>
                     </div>
@@ -176,10 +516,11 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="card feature-card">
                         <div class="card-body">
-                            <div class="feature-icon">💪</div>
-                            <div class="feature-title">Gợi ý bài tập</div>
+                            <div class="icon-wrap">💪</div>
+                            <div class="feature-title">Gợi ý luyện tập</div>
                             <p class="feature-text">
-                                Phân tích thể trạng để gợi ý bài tập phù hợp với mục tiêu tăng, giảm hoặc duy trì cân nặng.
+                                Phân tích mục tiêu và thể trạng để đưa ra gợi ý vận động phù hợp
+                                cho người muốn giảm cân, tăng cân hoặc duy trì vóc dáng.
                             </p>
                         </div>
                     </div>
@@ -188,42 +529,85 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="card feature-card">
                         <div class="card-body">
-                            <div class="feature-icon">🥗</div>
+                            <div class="icon-wrap">🥗</div>
                             <div class="feature-title">Dinh dưỡng thông minh</div>
                             <p class="feature-text">
-                                Đề xuất lượng calo và chế độ ăn phù hợp dựa trên chỉ số sức khỏe cá nhân.
+                                Hỗ trợ đề xuất nhu cầu calo và định hướng chế độ ăn phù hợp
+                                với tình trạng sức khỏe và mục tiêu cá nhân của từng người dùng.
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Stats -->
+            <div class="row g-4 stats-row">
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-number">7 & 30</div>
+                        <p class="stat-label">Ngày dự đoán cân nặng tương lai</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-number">BMI</div>
+                        <p class="stat-label">Chỉ số phân tích thể trạng cơ bản</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-number">3D</div>
+                        <p class="stat-label">Hiển thị mô hình cơ thể trực quan</p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <!-- Intro -->
-        <div class="row g-4 mt-2">
-            <div class="col-lg-6">
-                <div class="info-box h-100">
-                    <h4 class="mb-3">Mục tiêu hệ thống</h4>
-                    <p class="mb-0">
-                        Hệ thống được xây dựng nhằm hỗ trợ người dùng quản lý cân nặng khoa học hơn,
-                        theo dõi tiến trình thay đổi cơ thể, đồng thời cung cấp các phân tích và gợi ý
-                        hữu ích để cải thiện sức khỏe.
-                    </p>
+        <section class="section pt-5">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="info-card">
+                        <h4>Mục tiêu hệ thống</h4>
+                        <p>
+                            Hệ thống được xây dựng nhằm hỗ trợ người dùng quản lý cân nặng một cách
+                            khoa học, thuận tiện và trực quan hơn. Thông qua việc kết hợp theo dõi dữ liệu,
+                            phân tích sức khỏe và dự đoán bằng AI, ứng dụng giúp người dùng cải thiện thể trạng
+                            và xây dựng thói quen sống lành mạnh.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="info-card">
+                        <h4>Công nghệ sử dụng</h4>
+                        <p>
+                            Dự án được phát triển với FastAPI, MySQL, HTML/CSS/Bootstrap, Chart.js,
+                            scikit-learn và mô hình 3D. Sự kết hợp này giúp hệ thống vừa có giao diện thân thiện,
+                            vừa có khả năng xử lý dữ liệu, phân tích và trực quan hóa hiệu quả.
+                        </p>
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <div class="col-lg-6">
-                <div class="info-box h-100">
-                    <h4 class="mb-3">Công nghệ sử dụng</h4>
-                    <p class="mb-0">
-                        FastAPI, MySQL, HTML/CSS/Bootstrap, Chart.js, scikit-learn và model 3D để hiển thị trực quan
-                        thể trạng người dùng.
+        <!-- CTA -->
+        <section class="cta-box">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <h3>Bắt đầu hành trình cải thiện sức khỏe của bạn</h3>
+                    <p>
+                        Theo dõi cân nặng, phân tích chỉ số cơ thể và nhận các gợi ý phù hợp
+                        để xây dựng lộ trình cải thiện vóc dáng hiệu quả hơn mỗi ngày.
                     </p>
                 </div>
+                <div class="col-lg-4 text-lg-end">
+                    <a href="/register" class="btn-main">Đăng ký sử dụng</a>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <div class="text-center mt-5 footer-note">
+        <div class="footer-note">
             © Weight Management System - Đồ án tốt nghiệp
         </div>
     </div>

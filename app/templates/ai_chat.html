@@ -5,38 +5,73 @@
 {% block head_extra %}
 <style>
     .ai-chat-wrap {
-        max-width: 1440px;
+        max-width: 1500px;
     }
 
-    .ai-layout {
-        display: grid;
-        grid-template-columns: 260px 1fr;
-        gap: 18px;
-        align-items: start;
-    }
-
-    .ai-side-card,
     .ai-main-card {
-        border-radius: 20px;
+        border-radius: 22px;
         border: 1px solid var(--border-color);
         background: var(--bg-card);
         box-shadow: var(--shadow-soft);
-    }
-
-    .ai-side-card .card-body,
-    .ai-main-card .card-body {
-        padding: 18px;
-    }
-
-    .ai-main-card {
         height: calc(100vh - 210px);
-        min-height: 620px;
+        min-height: 640px;
     }
 
     .ai-main-card .card-body {
         display: flex;
         flex-direction: column;
         height: 100%;
+        padding: 20px;
+    }
+
+    .ai-top-tools {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+        flex-shrink: 0;
+    }
+
+    .ai-suggestion-bar {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+        flex-shrink: 0;
+    }
+
+    .quick-chip {
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.45);
+        color: var(--text-muted);
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-size: 14px;
+        line-height: 1.4;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        backdrop-filter: blur(4px);
+    }
+
+    .quick-chip:hover {
+        color: var(--text-main);
+        background: var(--bg-soft);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-light);
+    }
+
+    .quick-chip.primary {
+        background: rgba(25, 135, 84, 0.10);
+        color: #198754;
+        border: 1px solid rgba(25, 135, 84, 0.18);
+        font-weight: 600;
+    }
+
+    .quick-chip.primary:hover {
+        background: rgba(25, 135, 84, 0.16);
+        color: #146c43;
     }
 
     .ai-chat-box {
@@ -44,7 +79,7 @@
         min-height: 0;
         overflow-y: auto;
         padding: 16px;
-        border-radius: 16px;
+        border-radius: 18px;
         background: var(--bg-soft);
         border: 1px solid var(--border-color);
         margin-bottom: 12px;
@@ -64,7 +99,7 @@
     }
 
     .chat-bubble {
-        max-width: 82%;
+        max-width: 84%;
         border-radius: 18px;
         padding: 14px 16px;
         line-height: 1.7;
@@ -117,30 +152,6 @@
         text-decoration: underline;
     }
 
-    .quick-question {
-        cursor: pointer;
-        transition: 0.2s ease;
-        border-radius: 14px;
-        padding: 12px 14px;
-        font-size: 14px;
-        line-height: 1.5;
-    }
-
-    .quick-question:hover {
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-light);
-    }
-
-    .ai-top-tools {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 12px;
-        flex-shrink: 0;
-    }
-
     .typing-box {
         display: none;
         margin: 0 0 10px 0;
@@ -179,12 +190,12 @@
 
     .ai-input-wrap .form-control {
         border-radius: 14px;
-        min-height: 52px;
+        min-height: 54px;
         font-size: 15px;
     }
 
     .ai-input-wrap .btn {
-        min-width: 120px;
+        min-width: 140px;
         border-radius: 14px;
         font-weight: 700;
     }
@@ -240,18 +251,7 @@
         color: inherit;
     }
 
-    .ai-side-note {
-        font-size: 13px;
-        color: var(--text-muted);
-        line-height: 1.6;
-        margin-bottom: 0;
-    }
-
     @media (max-width: 1100px) {
-        .ai-layout {
-            grid-template-columns: 1fr;
-        }
-
         .ai-main-card {
             height: auto;
             min-height: unset;
@@ -262,7 +262,7 @@
         }
 
         .ai-chat-box {
-            height: 420px;
+            height: 430px;
             flex: unset;
         }
     }
@@ -283,6 +283,15 @@
         .ai-chat-box {
             height: 380px;
         }
+
+        .ai-suggestion-bar {
+            gap: 8px;
+        }
+
+        .quick-chip {
+            font-size: 13px;
+            padding: 9px 14px;
+        }
     }
 </style>
 {% endblock %}
@@ -301,92 +310,72 @@
         </div>
     </div>
 
-    <div class="ai-layout">
-        <div class="card ai-side-card">
-            <div class="card-body">
-                <div class="section-title">Gợi ý nhanh</div>
+    <div class="card ai-main-card">
+        <div class="card-body">
+            <div class="ai-top-tools">
+                <div class="section-title mb-0">Cuộc trò chuyện</div>
+                <button class="btn btn-outline-danger btn-sm" onclick="clearChat()">Xóa toàn bộ</button>
+            </div>
 
-                <div class="summary-box quick-question mb-2" onclick="setQuickQuestion('Tôi nên ăn bao nhiêu calo mỗi ngày?')">
+            <div class="ai-suggestion-bar">
+                <div class="quick-chip" onclick="setQuickQuestion('Tôi nên ăn bao nhiêu calo mỗi ngày?')">
                     🔥 Tôi nên ăn bao nhiêu calo mỗi ngày?
                 </div>
-                
-                <div class="summary-box quick-question mb-2" onclick="setQuickQuestion('BMI của tôi có ổn không?')">
+                <div class="quick-chip" onclick="setQuickQuestion('BMI của tôi có ổn không?')">
                     📊 BMI của tôi có ổn không?
                 </div>
-
-                <div class="summary-box quick-question mb-2" onclick="setQuickQuestion('Làm sao để duy trì cân nặng ổn định?')">
+                <div class="quick-chip" onclick="setQuickQuestion('Làm sao để duy trì cân nặng ổn định?')">
                     ⚖️ Làm sao để duy trì cân nặng ổn định?
                 </div>
-
-                <div class="summary-box quick-question mb-3" onclick="setQuickQuestion('Tôi nên tập gì để giảm mỡ?')">
+                <div class="quick-chip" onclick="setQuickQuestion('Tôi nên tập gì để giảm mỡ?')">
                     🏃 Tôi nên tập gì để giảm mỡ?
                 </div>
-                <button class="btn btn-success w-100 mb-3" onclick="generateMealPlan()">
-    📋 Gợi ý thực đơn 1 ngày
- </button>
-
-                <div class="quote-box mb-3">
-                    <div class="summary-title">Lưu ý</div>
-                    <div class="summary-value">
-                        AI chỉ hỗ trợ thông tin sức khỏe phổ thông, không thay thế bác sĩ.
-                    </div>
+                <div class="quick-chip primary" onclick="generateMealPlan()">
+                    📋 Gợi ý thực đơn 1 ngày
                 </div>
-
-                <p class="ai-side-note">
-                    AI đang ưu tiên trả lời dựa trên dữ liệu cân nặng, chiều cao, mục tiêu và mức vận động của bạn.
-                </p>
             </div>
-        </div>
 
-        <div class="card ai-main-card">
-            <div class="card-body">
-                <div class="ai-top-tools">
-                    <div class="section-title mb-0">Cuộc trò chuyện</div>
-                    <button class="btn btn-outline-danger btn-sm" onclick="clearChat()">Xóa toàn bộ</button>
-                </div>
+            <div id="chatBox" class="ai-chat-box">
+                {% if messages and messages|length > 0 %}
+                    {% for msg in messages %}
+                        <div class="chat-row {% if msg.role == 'user' %}user{% else %}ai{% endif %}" id="msg-{{ msg.id }}">
+                            <div class="chat-bubble">
+                                <div class="chat-role">
+                                    {% if msg.role == 'user' %}Bạn{% else %}AI{% endif %}
+                                </div>
 
-                <div id="chatBox" class="ai-chat-box">
-                    {% if messages and messages|length > 0 %}
-                        {% for msg in messages %}
-                            <div class="chat-row {% if msg.role == 'user' %}user{% else %}ai{% endif %}" id="msg-{{ msg.id }}">
-                                <div class="chat-bubble">
-                                    <div class="chat-role">
-                                        {% if msg.role == 'user' %}Bạn{% else %}AI{% endif %}
-                                    </div>
+                                <div class="chat-markdown">{{ msg.rendered_content | safe }}</div>
 
-                                    <div class="chat-markdown">{{ msg.rendered_content | safe }}</div>
-
-                                    <div class="chat-actions">
-                                        <button class="chat-delete-btn" onclick="deleteMessage({{ msg.id }})">Xóa</button>
-                                    </div>
+                                <div class="chat-actions">
+                                    <button class="chat-delete-btn" onclick="deleteMessage({{ msg.id }})">Xóa</button>
                                 </div>
                             </div>
-                        {% endfor %}
-                    {% else %}
-                        <div id="emptyChat" class="empty-chat">
-                            <div class="mb-2">🤖</div>
-                            <div>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện với AI.</div>
                         </div>
-                    {% endif %}
-                </div>
-
-                <div id="typingBox" class="typing-box">
-                    AI đang suy nghĩ
-                    <span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
-                </div>
-
-                <form id="chatForm" class="ai-input-wrap">
-                    <input
-                        type="text"
-                        id="messageInput"
-                        name="message"
-                        class="form-control"
-                        placeholder="Nhập câu hỏi của bạn..."
-                        required
-                    >
-                    <button type="submit" class="btn btn-success">Gửi</button>
-                </form>
+                    {% endfor %}
+                {% else %}
+                    <div id="emptyChat" class="empty-chat">
+                        <div class="mb-2">🤖</div>
+                        <div>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện với AI.</div>
+                    </div>
+                {% endif %}
             </div>
+
+            <div id="typingBox" class="typing-box">
+                AI đang suy nghĩ
+                <span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>
+            </div>
+
+            <form id="chatForm" class="ai-input-wrap">
+                <input
+                    type="text"
+                    id="messageInput"
+                    name="message"
+                    class="form-control"
+                    placeholder="Nhập câu hỏi của bạn..."
+                    required
+                >
+                <button type="submit" class="btn btn-success">Gửi</button>
+            </form>
         </div>
     </div>
 </div>
@@ -553,32 +542,33 @@
         const chatBox = document.getElementById("chatBox");
         if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
     });
-async function generateMealPlan() {
-    const typingBox = document.getElementById("typingBox");
-    typingBox.style.display = "block";
 
-    try {
-        const res = await fetch("/ai-chat/meal-plan", {
-            method: "POST"
-        });
+    async function generateMealPlan() {
+        const typingBox = document.getElementById("typingBox");
+        typingBox.style.display = "block";
 
-        const data = await res.json();
-        typingBox.style.display = "none";
+        try {
+            const res = await fetch("/ai-chat/meal-plan", {
+                method: "POST"
+            });
 
-        if (!res.ok) {
-            appendMessage("assistant", data.error || "Không thể tạo thực đơn lúc này.");
-            return;
+            const data = await res.json();
+            typingBox.style.display = "none";
+
+            if (!res.ok) {
+                appendMessage("assistant", data.error || "Không thể tạo thực đơn lúc này.");
+                return;
+            }
+
+            appendMessage(
+                "assistant",
+                data.rendered_answer || data.answer || "Chưa có thực đơn.",
+                null
+            );
+        } catch (err) {
+            typingBox.style.display = "none";
+            appendMessage("assistant", "Không thể kết nối tới AI lúc này.");
         }
-
-        appendMessage(
-            "assistant",
-            data.rendered_answer || data.answer || "Chưa có thực đơn.",
-            null
-        );
-    } catch (err) {
-        typingBox.style.display = "none";
-        appendMessage("assistant", "Không thể kết nối tới AI lúc này.");
     }
-}
 </script>
 {% endblock %}
