@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-import google.genai as genai
+
 
 from fastapi import FastAPI, Request, Form, Depends
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -20,9 +20,8 @@ from app.database import get_db, engine, Base
 from app.models import ChatMessage, User, WeightRecord, ReminderSettings
 
 load_dotenv()
+gemini_client = None
 
-gemini_api_key = os.getenv("GEMINI_API_KEY")
-gemini_client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
 def suggest_default_reminder_times(wake_up_time=None, goal=None):
     breakfast = "07:00"
     lunch = "12:00"
