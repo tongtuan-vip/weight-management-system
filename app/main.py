@@ -133,9 +133,11 @@ def get_latest_weight_record(db: Session, user_id: int):
 def home(request: Request):
     user_id = request.session.get("user_id")
     return templates.TemplateResponse(
+        request,
         "index.html",
-        {"request": request, "user_id": user_id}
+        {"user_id": user_id}
     )
+
 @app.get("/healthz")
 def healthz():
     return {"status": "ok"}
@@ -143,10 +145,10 @@ def healthz():
 @app.get("/register")
 def register_page(request: Request):
     return templates.TemplateResponse(
+        request,
         "register.html",
-        {"request": request, "message": ""}
+        {"message": ""}
     )
-
 
 @app.post("/register")
 def register_user(
@@ -160,9 +162,10 @@ def register_user(
 
     if existing_user:
         return templates.TemplateResponse(
-            "register.html",
-            {"request": request, "message": "Email đã tồn tại!"}
-        )
+        request,
+    "register.html",
+    {"message": "Email đã tồn tại!"}
+)
 
     new_user = User(
         full_name=full_name,
@@ -174,16 +177,18 @@ def register_user(
     db.commit()
 
     return templates.TemplateResponse(
+       request,
         "login.html",
-        {"request": request, "message": "Đăng ký thành công! Hãy đăng nhập."}
+        { "message": "Đăng ký thành công! Hãy đăng nhập."}
     )
 
 
 @app.get("/login")
 def login_page(request: Request):
     return templates.TemplateResponse(
+        request,
         "login.html",
-        {"request": request, "message": ""}
+        { "message": ""}
     )
 
 
@@ -201,8 +206,9 @@ def login_user(
 
     if not user:
         return templates.TemplateResponse(
+            request,
             "login.html",
-            {"request": request, "message": "Sai email hoặc mật khẩu!"}
+            { "message": "Sai email hoặc mật khẩu!"}
         )
 
     request.session["user_id"] = user.id
@@ -222,9 +228,10 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
     allow_current_weight_input = latest_record is None
 
     return templates.TemplateResponse(
+        request,
         "profile.html",
         {
-            "request": request,
+            
             "user": user,
             "message": "",
             "allow_current_weight_input": allow_current_weight_input
@@ -280,9 +287,10 @@ def save_profile(
     allow_current_weight_input = latest_record is None
 
     return templates.TemplateResponse(
+        request,
         "profile.html",
         {
-            "request": request,
+            
             "user": user,
             "message": "Lưu thông tin thành công!",
             "allow_current_weight_input": allow_current_weight_input
@@ -415,9 +423,10 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
                 remaining_weight = 0
 
     return templates.TemplateResponse(
+        request,
         "dashboard.html",
         {
-            "request": request,
+            
             "user": user,
             "bmi": bmi,
             "goal": goal,
@@ -463,9 +472,10 @@ def weight_page(request: Request, db: Session = Depends(get_db)):
     )
 
     return templates.TemplateResponse(
+        request,
         "weight.html",
         {
-            "request": request,
+            
             "user": user,
             "records": records,
             "message": ""
@@ -505,9 +515,10 @@ def save_weight(
     )
 
     return templates.TemplateResponse(
+        request,
         "weight.html",
         {
-            "request": request,
+            
             "user": user,
             "records": records,
             "message": "Lưu cân nặng thành công!"
@@ -533,9 +544,10 @@ def predict_weight(request: Request, db: Session = Depends(get_db)):
 
     if len(records) < 2:
         return templates.TemplateResponse(
+            request,
             "predict.html",
             {
-                "request": request,
+                
                 "user": user,
                 "message": "Cần ít nhất 2 mốc cân nặng để dự đoán.",
                 "predicted_7": None,
@@ -587,9 +599,10 @@ def predict_weight(request: Request, db: Session = Depends(get_db)):
     ]
 
     return templates.TemplateResponse(
+        request,
         "predict.html",
         {
-            "request": request,
+           
             "user": user,
             "message": "",
             "predicted_7": round(float(predicted_7), 2),
@@ -616,9 +629,10 @@ def health_analysis(request: Request, db: Session = Depends(get_db)):
 
     if not user or not user.height or not latest_weight or not user.age or not user.gender:
         return templates.TemplateResponse(
+            request,
             "health.html",
             {
-                "request": request,
+                
                 "user": user,
                 "message": "Vui lòng cập nhật đầy đủ tuổi, giới tính, chiều cao và nhập ít nhất 1 bản ghi cân nặng.",
                 "bmi": None,
@@ -719,9 +733,10 @@ def health_analysis(request: Request, db: Session = Depends(get_db)):
         ]
 
     return templates.TemplateResponse(
+        request,
         "health.html",
         {
-            "request": request,
+            
             "user": user,
             "message": "",
             "bmi": bmi,
@@ -762,9 +777,10 @@ def delete_weight_record(
 @app.get("/forgot-password")
 def forgot_password_page(request: Request):
     return templates.TemplateResponse(
+        request,
         "forgot_password.html",
         {
-            "request": request,
+            
             "message": ""
         }
     )
@@ -782,18 +798,20 @@ def forgot_password(
 
     if not user:
         return templates.TemplateResponse(
+            request,
             "forgot_password.html",
             {
-                "request": request,
+                
                 "message": "Email không tồn tại trong hệ thống!"
             }
         )
 
     if new_password != confirm_password:
         return templates.TemplateResponse(
+            request,
             "forgot_password.html",
             {
-                "request": request,
+                
                 "message": "Mật khẩu xác nhận không khớp!"
             }
         )
@@ -802,9 +820,10 @@ def forgot_password(
     db.commit()
 
     return templates.TemplateResponse(
+       request,
         "login.html",
         {
-            "request": request,
+           
             "message": "Đổi mật khẩu thành công! Hãy đăng nhập lại."
         }
     )
@@ -873,9 +892,10 @@ def ai_chat_page(request: Request, db: Session = Depends(get_db)):
         })
 
     return templates.TemplateResponse(
+       request,
         "ai_chat.html",
         {
-            "request": request,
+            
             "user": user,
             "messages": rendered_messages
         }
@@ -1105,12 +1125,15 @@ def analysis_page(request: Request, db: Session = Depends(get_db)):
     )
 
     if not records or len(records) < 2:
-        return templates.TemplateResponse("analysis.html", {
-            "request": request,
-            "user": user,
-            "records": records,
-            "message": "Cần ít nhất 2 bản ghi cân nặng để phân tích xu hướng."
-        })
+        return templates.TemplateResponse(
+    request,
+    "analysis.html",
+    {
+        "user": user,
+        "records": records,
+        "message": "Cần ít nhất 2 bản ghi cân nặng để phân tích xu hướng."
+    }
+)
 
     first_weight = records[0].weight
     latest_weight = records[-1].weight
@@ -1141,8 +1164,11 @@ def analysis_page(request: Request, db: Session = Depends(get_db)):
     labels = [r.record_date.strftime("%d/%m/%Y") for r in records]
     weights = [float(r.weight) for r in records]
 
-    return templates.TemplateResponse("analysis.html", {
-        "request": request,
+    return templates.TemplateResponse(
+        request,
+        "analysis.html",
+          {
+        
         "user": user,
         "records": records,
         "labels": labels,
@@ -1199,9 +1225,10 @@ def reminders_page(request: Request, db: Session = Depends(get_db)):
         db.refresh(settings)
 
     return templates.TemplateResponse(
+        request,
         "reminders.html",
         {
-            "request": request,
+            
             "user": user,
             "settings": settings,
             "goal": goal
