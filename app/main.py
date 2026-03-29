@@ -6,7 +6,6 @@ from fastapi import Request, Form, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from models import User
 from security import hash_password
 from database import get_db
 from fastapi import FastAPI, Request, Form, Depends
