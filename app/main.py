@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-
+from google import genai
 
 from fastapi import FastAPI, Request, Form, Depends
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -20,7 +20,9 @@ from app.database import get_db, engine, Base
 from app.models import ChatMessage, User, WeightRecord, ReminderSettings
 
 load_dotenv()
-gemini_client = None
+
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+gemini_client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
 
 def suggest_default_reminder_times(wake_up_time=None, goal=None):
     breakfast = "07:00"
@@ -909,7 +911,11 @@ def ai_chat_send(
     user_id = request.session.get("user_id")
     if not user_id:
         return JSONResponse({"error": "Chưa đăng nhập"}, status_code=401)
-
+    if not gemini_client:
+        return JSONResponse(
+        {"error": "Chưa cấu hình GEMINI_API_KEY trên server"},
+        status_code=500
+    )
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return JSONResponse({"error": "Không tìm thấy người dùng"}, status_code=404)
@@ -1051,7 +1057,11 @@ def ai_meal_plan(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
     if not user_id:
         return JSONResponse({"error": "Chưa đăng nhập"}, status_code=401)
-
+    if not gemini_client:
+        return JSONResponse(
+        {"error": "Chưa cấu hình GEMINI_API_KEY trên server"},
+        status_code=500
+    )
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return JSONResponse({"error": "Không tìm thấy người dùng"}, status_code=404)
