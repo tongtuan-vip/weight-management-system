@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from google import genai
-
+from math import isnan
 from fastapi import Request, Form, Depends
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -51,7 +51,16 @@ def suggest_default_reminder_times(wake_up_time=None, goal=None):
         workout = "18:30"
 
     return breakfast, lunch, dinner, workout
-
+def save_chat_message(db: Session, user_id: int, role: str, content: str):
+    msg = ChatMessage(
+        user_id=user_id,
+        role=role,
+        content=content
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg
 def calculate_weight_streak(records):
     if not records:
         return 0
@@ -207,8 +216,11 @@ from app.security import verify_password
 def login_page(request: Request):
     return templates.TemplateResponse(
         request,
-         "login.html")
-
+        "login.html",
+        {
+            "message": ""
+        }
+    )
 
 @app.post("/login")
 def login(
@@ -217,30 +229,52 @@ def login(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    email = email.strip().lower()
-    password = password.strip()
+    try:
+        email = email.strip().lower()
+        password = password.strip()
 
-    user = db.query(User).filter(User.email == email).first()
+        user = db.query(User).filter(User.email == email).first()
 
-    if not user:
+        if not user:
+            return templates.TemplateResponse(
+                request,
+                "login.html",
+                {
+                    "message": "Email hoặc mật khẩu không đúng."
+                }
+            )
+
+        valid_password = False
+
+        try:
+            valid_password = verify_password(password, user.password)
+        except Exception:
+            # Nếu mật khẩu cũ đang lưu plain text thì tự chuyển sang hash
+            if user.password == password:
+                valid_password = True
+                user.password = hash_password(password)
+                db.commit()
+
+        if not valid_password:
+            return templates.TemplateResponse(
+                request,
+                "login.html",
+                {
+                    "message": "Email hoặc mật khẩu không đúng."
+                }
+            )
+
+        request.session["user_id"] = user.id
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    except Exception as e:
         return templates.TemplateResponse(
             request,
-             "login.html", {
-          
-            "message": "Email hoặc mật khẩu không đúng."
-        })
-
-    if not verify_password(password, user.password):
-        return templates.TemplateResponse(
-           request,
-           "login.html", {
-           
-            "message": "Email hoặc mật khẩu không đúng."
-        })
-
-    request.session["user_id"] = user.id
-
-    return RedirectResponse(url="/dashboard", status_code=302)
+            "login.html",
+            {
+                "message": f"Lỗi đăng nhập: {str(e)}"
+            }
+        )
 
 @app.get("/profile")
 def profile_page(request: Request, db: Session = Depends(get_db)):
@@ -801,16 +835,6 @@ def delete_weight_record(
         db.commit()
 
     return RedirectResponse(url="/weight", status_code=302)
-@app.get("/forgot-password")
-def forgot_password_page(request: Request):
-    return templates.TemplateResponse(
-        request,
-        "forgot_password.html",
-        {
-            
-            "message": ""
-        }
-    )
 
 
 @app.post("/forgot-password")
@@ -821,39 +845,62 @@ def forgot_password(
     confirm_password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.email == email).first()
+    try:
+        email = email.strip().lower()
+        new_password = new_password.strip()
+        confirm_password = confirm_password.strip()
 
-    if not user:
+        user = db.query(User).filter(User.email == email).first()
+
+        if not user:
+            return templates.TemplateResponse(
+                request,
+                "forgot_password.html",
+                {
+                    "message": "Email không tồn tại trong hệ thống!"
+                }
+            )
+
+        if len(new_password) < 8:
+            return templates.TemplateResponse(
+                request,
+                "forgot_password.html",
+                {
+                    "message": "Mật khẩu phải có ít nhất 8 ký tự!"
+                }
+            )
+
+        if new_password != confirm_password:
+            return templates.TemplateResponse(
+                request,
+                "forgot_password.html",
+                {
+                    "message": "Mật khẩu xác nhận không khớp!"
+                }
+            )
+
+        # 🔥 QUAN TRỌNG NHẤT
+        user.password = hash_password(new_password)
+
+        db.commit()
+
+        return templates.TemplateResponse(
+            request,
+            "login.html",
+            {
+                "message": "Đổi mật khẩu thành công! Hãy đăng nhập lại."
+            }
+        )
+
+    except Exception as e:
+        db.rollback()
         return templates.TemplateResponse(
             request,
             "forgot_password.html",
             {
-                
-                "message": "Email không tồn tại trong hệ thống!"
+                "message": f"Có lỗi xảy ra: {str(e)}"
             }
         )
-
-    if new_password != confirm_password:
-        return templates.TemplateResponse(
-            request,
-            "forgot_password.html",
-            {
-                
-                "message": "Mật khẩu xác nhận không khớp!"
-            }
-        )
-
-    user.password = new_password
-    db.commit()
-
-    return templates.TemplateResponse(
-       request,
-        "login.html",
-        {
-           
-            "message": "Đổi mật khẩu thành công! Hãy đăng nhập lại."
-        }
-    )
 def predict_target_date(records, target_weight):
     if not records or len(records) < 2 or target_weight is None:
         return None
@@ -1077,19 +1124,266 @@ def clear_ai_chat(
     db.commit()
 
     return JSONResponse({"success": True, "message": "Đã xóa toàn bộ cuộc trò chuyện"})
+
+def calculate_user_health_info(user):
+    if not user or not user.height or not user.current_weight:
+        return None
+
+    try:
+        height_m = user.height / 100
+        weight = float(user.current_weight)
+        bmi = round(weight / (height_m ** 2), 2)
+
+        age = user.age if user.age else 20
+        gender = (user.gender or "").strip().lower()
+
+        if gender == "nam":
+            bmr = 10 * weight + 6.25 * user.height - 5 * age + 5
+        else:
+            bmr = 10 * weight + 6.25 * user.height - 5 * age - 161
+
+        activity_map = {
+            "Ít vận động": 1.2,
+            "Vận động nhẹ": 1.375,
+            "Vận động vừa": 1.55,
+            "Vận động nhiều": 1.725
+        }
+
+        activity_factor = activity_map.get(user.activity_level, 1.2)
+        tdee = round(bmr * activity_factor, 0)
+
+        goal = "Duy trì"
+        target_calories = int(tdee)
+
+        if user.target_weight:
+            if user.target_weight < user.current_weight:
+                goal = "Giảm cân"
+                target_calories = int(tdee - 500)
+            elif user.target_weight > user.current_weight:
+                goal = "Tăng cân"
+                target_calories = int(tdee + 300)
+
+        return {
+            "bmi": bmi,
+            "bmr": round(bmr, 0),
+            "tdee": int(tdee),
+            "goal": goal,
+            "target_calories": max(target_calories, 1200)
+        }
+    except Exception:
+        return None
+
+
+def get_meal_plan_1_day(goal, calories):
+    if goal == "Giảm cân":
+        return f"""
+        <h4>📋 Thực đơn gợi ý 1 ngày ({goal})</h4>
+        <p><strong>Mục tiêu năng lượng:</strong> khoảng {calories} kcal/ngày</p>
+
+        <p><strong>Bữa sáng:</strong> 2 quả trứng luộc, 2 lát bánh mì nguyên cám, 1 quả táo</p>
+        <p><strong>Bữa phụ sáng:</strong> 1 hũ sữa chua không đường</p>
+        <p><strong>Bữa trưa:</strong> 150g ức gà áp chảo, 1/2 chén cơm gạo lứt, salad rau xanh</p>
+        <p><strong>Bữa phụ chiều:</strong> 1 quả chuối nhỏ hoặc 10 hạt hạnh nhân</p>
+        <p><strong>Bữa tối:</strong> 150g cá hấp, rau luộc, 1 củ khoai lang nhỏ</p>
+
+        <p><strong>Lưu ý:</strong> Uống đủ nước, hạn chế nước ngọt và đồ chiên rán.</p>
+        """
+
+    elif goal == "Tăng cân":
+        return f"""
+        <h4>📋 Thực đơn gợi ý 1 ngày ({goal})</h4>
+        <p><strong>Mục tiêu năng lượng:</strong> khoảng {calories} kcal/ngày</p>
+
+        <p><strong>Bữa sáng:</strong> Bánh mì trứng, 1 ly sữa, 1 quả chuối</p>
+        <p><strong>Bữa phụ sáng:</strong> 1 hũ sữa chua, 1 nắm hạt dinh dưỡng</p>
+        <p><strong>Bữa trưa:</strong> 200g thịt bò, 1 chén cơm, rau xanh, canh</p>
+        <p><strong>Bữa phụ chiều:</strong> Sinh tố bơ hoặc chuối sữa</p>
+        <p><strong>Bữa tối:</strong> 200g cá hồi hoặc thịt gà, khoai tây, rau củ</p>
+        <p><strong>Bữa phụ tối:</strong> 1 ly sữa ấm hoặc yến mạch</p>
+
+        <p><strong>Lưu ý:</strong> Chia nhỏ bữa ăn và ưu tiên protein, tinh bột tốt.</p>
+        """
+    else:
+        return f"""
+        <h4>📋 Thực đơn gợi ý 1 ngày ({goal})</h4>
+        <p><strong>Mục tiêu năng lượng:</strong> khoảng {calories} kcal/ngày</p>
+
+        <p><strong>Bữa sáng:</strong> Yến mạch với sữa chua và trái cây</p>
+        <p><strong>Bữa phụ sáng:</strong> 1 quả táo hoặc cam</p>
+        <p><strong>Bữa trưa:</strong> 150g thịt nạc, 1 chén cơm vừa, rau luộc, canh</p>
+        <p><strong>Bữa phụ chiều:</strong> 1 hũ sữa chua không đường</p>
+        <p><strong>Bữa tối:</strong> Cá hấp hoặc ức gà, rau xanh, 1 củ khoai lang nhỏ</p>
+
+        <p><strong>Lưu ý:</strong> Duy trì ăn uống đều đặn và cân bằng dinh dưỡng.</p>
+        """
+
+
+def get_meal_plan_7_days(goal, calories):
+    if goal == "Giảm cân":
+        days = [
+            "Ngày 1: Yến mạch, ức gà, salad, cá hấp",
+            "Ngày 2: Trứng luộc, thịt bò xào rau, khoai lang, sữa chua",
+            "Ngày 3: Bánh mì nguyên cám, cá hồi, rau luộc, trái cây ít ngọt",
+            "Ngày 4: Yến mạch chuối, ức gà áp chảo, canh rau, hạnh nhân",
+            "Ngày 5: Trứng + táo, thịt nạc, cơm gạo lứt, rau củ hấp",
+            "Ngày 6: Sữa chua yến mạch, cá hấp, salad dưa leo, khoai lang",
+            "Ngày 7: Bún gạo lứt, thịt gà xé, rau xanh, trái cây"
+        ]
+    elif goal == "Tăng cân":
+        days = [
+            "Ngày 1: Bánh mì trứng, thịt bò, cơm, sữa",
+            "Ngày 2: Yến mạch sữa, cá hồi, khoai tây, sinh tố bơ",
+            "Ngày 3: Phở bò, thịt gà, cơm, trái cây",
+            "Ngày 4: Bún thịt, trứng, sữa chua, các loại hạt",
+            "Ngày 5: Bánh mì ốp la, cá, cơm, sinh tố chuối",
+            "Ngày 6: Xôi, thịt bò, rau xanh, sữa",
+            "Ngày 7: Mì nui, ức gà, khoai lang, trái cây"
+        ]
+    else:
+        days = [
+            "Ngày 1: Yến mạch, thịt gà, cơm vừa đủ, rau xanh",
+            "Ngày 2: Bánh mì trứng, cá hấp, canh rau, trái cây",
+            "Ngày 3: Sữa chua, thịt nạc, cơm, salad",
+            "Ngày 4: Yến mạch chuối, cá hồi, rau luộc, táo",
+            "Ngày 5: Bánh mì nguyên cám, thịt bò, canh rau",
+            "Ngày 6: Trứng luộc, ức gà, khoai lang, sữa chua",
+            "Ngày 7: Bún gạo lứt, cá, rau xanh, trái cây"
+        ]
+
+    day_html = "".join([f"<p><strong>{item.split(':')[0]}:</strong> {item.split(':', 1)[1].strip()}</p>" for item in days])
+
+    return f"""
+    <h4>🗓️ Thực đơn gợi ý 7 ngày ({goal})</h4>
+    <p><strong>Mục tiêu năng lượng:</strong> khoảng {calories} kcal/ngày</p>
+    {day_html}
+    <p><strong>Lưu ý:</strong> Có thể thay đổi món tương đương để đỡ ngán nhưng vẫn giữ đúng mục tiêu calo.</p>
+    """
+
+
+def get_meal_plan_30_days(goal, calories):
+    if goal == "Giảm cân":
+        content = """
+        <p><strong>Tuần 1:</strong> Giảm nước ngọt, đồ chiên, tăng rau xanh và protein nạc.</p>
+        <p><strong>Tuần 2:</strong> Duy trì cơm vừa phải, ưu tiên cá, gà, trứng, khoai lang.</p>
+        <p><strong>Tuần 3:</strong> Ăn đều 3 bữa chính + 1-2 bữa phụ nhẹ, tránh ăn đêm.</p>
+        <p><strong>Tuần 4:</strong> Ổn định khẩu phần, theo dõi cân nặng và điều chỉnh lượng calo nếu cần.</p>
+        """
+    elif goal == "Tăng cân":
+        content = """
+        <p><strong>Tuần 1:</strong> Tăng số bữa ăn, bổ sung sữa, trứng, thịt, cơm và khoai.</p>
+        <p><strong>Tuần 2:</strong> Duy trì thừa nhẹ calo, ưu tiên protein và tinh bột tốt.</p>
+        <p><strong>Tuần 3:</strong> Kết hợp thêm sinh tố, hạt dinh dưỡng, sữa chua, bơ đậu phộng.</p>
+        <p><strong>Tuần 4:</strong> Theo dõi cân nặng mỗi tuần để tăng calo hợp lý, tránh tăng mỡ quá nhanh.</p>
+        """
+    else:
+        content = """
+        <p><strong>Tuần 1:</strong> Thiết lập thói quen ăn đúng giờ, cân bằng đủ 4 nhóm chất.</p>
+        <p><strong>Tuần 2:</strong> Duy trì khẩu phần ổn định, ưu tiên thực phẩm tươi và ít chế biến.</p>
+        <p><strong>Tuần 3:</strong> Kiểm soát đồ ngọt, nước ngọt, giữ nhịp sinh hoạt điều độ.</p>
+        <p><strong>Tuần 4:</strong> Tiếp tục chế độ ăn lành mạnh và theo dõi cân nặng định kỳ.</p>
+        """
+
+    return f"""
+    <h4>📆 Thực đơn gợi ý 30 ngày ({goal})</h4>
+    <p><strong>Mục tiêu năng lượng:</strong> khoảng {calories} kcal/ngày</p>
+    {content}
+    <p><strong>Gợi ý chung:</strong> Với kế hoạch 30 ngày, bạn nên theo dõi cân nặng mỗi tuần để điều chỉnh khẩu phần phù hợp.</p>
+    """
+
+@app.post("/ai-chat/meal-plan-7-days")
+def generate_meal_plan_7_days(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    try:
+        user_id = request.session.get("user_id")
+        if not user_id:
+            return JSONResponse(status_code=401, content={"error": "Bạn cần đăng nhập."})
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return JSONResponse(status_code=404, content={"error": "Không tìm thấy người dùng."})
+
+        info = calculate_user_health_info(user)
+        if not info:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Vui lòng cập nhật đầy đủ chiều cao, cân nặng, tuổi, giới tính và mức vận động trong hồ sơ."}
+            )
+
+        user_prompt = "🗓️ Gợi ý thực đơn 7 ngày"
+        answer = get_meal_plan_7_days(info["goal"], info["target_calories"])
+
+        user_msg = save_chat_message(db, user_id, "user", user_prompt)
+        assistant_msg = save_chat_message(db, user_id, "assistant", answer)
+
+        return JSONResponse({
+            "user_message_id": user_msg.id,
+            "user_content": user_prompt,
+            "assistant_message_id": assistant_msg.id,
+            "answer": answer,
+            "rendered_answer": answer
+        })
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"Lỗi tạo thực đơn 7 ngày: {str(e)}"})
+
+@app.post("/ai-chat/meal-plan-30-days")
+def generate_meal_plan_30_days(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    try:
+        user_id = request.session.get("user_id")
+        if not user_id:
+            return JSONResponse(status_code=401, content={"error": "Bạn cần đăng nhập."})
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return JSONResponse(status_code=404, content={"error": "Không tìm thấy người dùng."})
+
+        info = calculate_user_health_info(user)
+        if not info:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Vui lòng cập nhật đầy đủ chiều cao, cân nặng, tuổi, giới tính và mức vận động trong hồ sơ."}
+            )
+
+        user_prompt = "📆 Gợi ý thực đơn 30 ngày"
+        answer = get_meal_plan_30_days(info["goal"], info["target_calories"])
+
+        user_msg = save_chat_message(db, user_id, "user", user_prompt)
+        assistant_msg = save_chat_message(db, user_id, "assistant", answer)
+
+        return JSONResponse({
+            "user_message_id": user_msg.id,
+            "user_content": user_prompt,
+            "assistant_message_id": assistant_msg.id,
+            "answer": answer,
+            "rendered_answer": answer
+        })
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"Lỗi tạo thực đơn 30 ngày: {str(e)}"})
+
+
 @app.post("/ai-chat/meal-plan")
-def ai_meal_plan(request: Request, db: Session = Depends(get_db)):
+def ai_meal_plan_1_day(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
     if not user_id:
         return JSONResponse({"error": "Chưa đăng nhập"}, status_code=401)
+
     if not gemini_client:
         return JSONResponse(
-        {"error": "Chưa cấu hình GEMINI_API_KEY trên server"},
-        status_code=500
-    )
+            {"error": "Chưa cấu hình GEMINI_API_KEY trên server"},
+            status_code=500
+        )
+
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return JSONResponse({"error": "Không tìm thấy người dùng"}, status_code=404)
+
+    user_prompt = "📋 Gợi ý thực đơn 1 ngày"
 
     latest_record = (
         db.query(WeightRecord)
@@ -1132,18 +1426,27 @@ Thông tin người dùng:
 
         answer = response.text.strip() if response.text else "Mình chưa thể gợi ý thực đơn lúc này."
 
+        # Lưu user message
+        user_msg = save_chat_message(db, user_id, "user", user_prompt)
+
+        # Lưu assistant message
+        assistant_msg = save_chat_message(db, user_id, "assistant", answer)
+
+        rendered_answer = markdown.markdown(
+            answer,
+            extensions=["extra", "nl2br", "fenced_code"]
+        )
+
+        return JSONResponse({
+            "user_message_id": user_msg.id,
+            "user_content": user_prompt,
+            "assistant_message_id": assistant_msg.id,
+            "answer": answer,
+            "rendered_answer": rendered_answer
+        })
+
     except Exception as e:
         return JSONResponse({"error": f"Lỗi Gemini: {str(e)}"}, status_code=500)
-
-    rendered_answer = markdown.markdown(
-        answer,
-        extensions=["extra", "nl2br", "fenced_code"]
-    )
-
-    return JSONResponse({
-        "answer": answer,
-        "rendered_answer": rendered_answer
-    })
 @app.get("/analysis")
 def analysis_page(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
