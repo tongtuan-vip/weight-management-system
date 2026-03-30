@@ -51,16 +51,7 @@ def suggest_default_reminder_times(wake_up_time=None, goal=None):
         workout = "18:30"
 
     return breakfast, lunch, dinner, workout
-def save_chat_message(db: Session, user_id: int, role: str, content: str):
-    msg = ChatMessage(
-        user_id=user_id,
-        role=role,
-        content=content
-    )
-    db.add(msg)
-    db.commit()
-    db.refresh(msg)
-    return msg
+
 def calculate_weight_streak(records):
     if not records:
         return 0
@@ -835,6 +826,15 @@ def delete_weight_record(
         db.commit()
 
     return RedirectResponse(url="/weight", status_code=302)
+@app.get("/forgot-password")
+def forgot_password_page(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "forgot_password.html",
+        {
+            "message": ""
+        }
+    )
 
 
 @app.post("/forgot-password")
@@ -1125,17 +1125,34 @@ def clear_ai_chat(
 
     return JSONResponse({"success": True, "message": "Đã xóa toàn bộ cuộc trò chuyện"})
 
-def calculate_user_health_info(user):
-    if not user or not user.height or not user.current_weight:
+def save_chat_message(db: Session, user_id: int, role: str, content: str):
+    msg = ChatMessage(
+        user_id=user_id,
+        role=role,
+        content=content
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg
+
+
+def calculate_user_health_info(user, latest_weight):
+    if not user:
+        return None
+
+    # Bắt buộc phải có các dữ liệu này
+    if not user.height or latest_weight is None or not user.age or not user.gender or not user.activity_level:
         return None
 
     try:
         height_m = user.height / 100
-        weight = float(user.current_weight)
+        weight = float(latest_weight)
         bmi = round(weight / (height_m ** 2), 2)
 
-        age = user.age if user.age else 20
+        age = int(user.age)
         gender = (user.gender or "").strip().lower()
+        activity_level = (user.activity_level or "").strip()
 
         if gender == "nam":
             bmr = 10 * weight + 6.25 * user.height - 5 * age + 5
@@ -1149,17 +1166,17 @@ def calculate_user_health_info(user):
             "Vận động nhiều": 1.725
         }
 
-        activity_factor = activity_map.get(user.activity_level, 1.2)
+        activity_factor = activity_map.get(activity_level, 1.2)
         tdee = round(bmr * activity_factor, 0)
 
         goal = "Duy trì"
         target_calories = int(tdee)
 
         if user.target_weight:
-            if user.target_weight < user.current_weight:
+            if float(user.target_weight) < weight:
                 goal = "Giảm cân"
                 target_calories = int(tdee - 500)
-            elif user.target_weight > user.current_weight:
+            elif float(user.target_weight) > weight:
                 goal = "Tăng cân"
                 target_calories = int(tdee + 300)
 
@@ -1188,7 +1205,6 @@ def get_meal_plan_1_day(goal, calories):
 
         <p><strong>Lưu ý:</strong> Uống đủ nước, hạn chế nước ngọt và đồ chiên rán.</p>
         """
-
     elif goal == "Tăng cân":
         return f"""
         <h4>📋 Thực đơn gợi ý 1 ngày ({goal})</h4>
@@ -1250,7 +1266,9 @@ def get_meal_plan_7_days(goal, calories):
             "Ngày 7: Bún gạo lứt, cá, rau xanh, trái cây"
         ]
 
-    day_html = "".join([f"<p><strong>{item.split(':')[0]}:</strong> {item.split(':', 1)[1].strip()}</p>" for item in days])
+    day_html = "".join(
+        [f"<p><strong>{item.split(':')[0]}:</strong> {item.split(':', 1)[1].strip()}</p>" for item in days]
+    )
 
     return f"""
     <h4>🗓️ Thực đơn gợi ý 7 ngày ({goal})</h4>
@@ -1291,24 +1309,30 @@ def get_meal_plan_30_days(goal, calories):
     """
 
 @app.post("/ai-chat/meal-plan-7-days")
-def generate_meal_plan_7_days(
-    request: Request,
-    db: Session = Depends(get_db)
-):
+def generate_meal_plan_7_days(request: Request, db: Session = Depends(get_db)):
     try:
         user_id = request.session.get("user_id")
         if not user_id:
-            return JSONResponse(status_code=401, content={"error": "Bạn cần đăng nhập."})
+            return JSONResponse({"error": "Bạn cần đăng nhập."}, status_code=401)
 
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
-            return JSONResponse(status_code=404, content={"error": "Không tìm thấy người dùng."})
+            return JSONResponse({"error": "Không tìm thấy người dùng."}, status_code=404)
 
-        info = calculate_user_health_info(user)
+        latest_record = (
+            db.query(WeightRecord)
+            .filter(WeightRecord.user_id == user_id)
+            .order_by(desc(WeightRecord.record_date), desc(WeightRecord.id))
+            .first()
+        )
+
+        latest_weight = latest_record.weight if latest_record else None
+        info = calculate_user_health_info(user, latest_weight)
+
         if not info:
             return JSONResponse(
-                status_code=400,
-                content={"error": "Vui lòng cập nhật đầy đủ chiều cao, cân nặng, tuổi, giới tính và mức vận động trong hồ sơ."}
+                {"error": "Vui lòng cập nhật đầy đủ chiều cao, tuổi, giới tính, mức vận động và thêm ít nhất 1 bản ghi cân nặng."},
+                status_code=400
             )
 
         user_prompt = "🗓️ Gợi ý thực đơn 7 ngày"
@@ -1326,27 +1350,32 @@ def generate_meal_plan_7_days(
         })
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"Lỗi tạo thực đơn 7 ngày: {str(e)}"})
-
+        return JSONResponse({"error": f"Lỗi tạo thực đơn 7 ngày: {str(e)}"}, status_code=500)
 @app.post("/ai-chat/meal-plan-30-days")
-def generate_meal_plan_30_days(
-    request: Request,
-    db: Session = Depends(get_db)
-):
+def generate_meal_plan_30_days(request: Request, db: Session = Depends(get_db)):
     try:
         user_id = request.session.get("user_id")
         if not user_id:
-            return JSONResponse(status_code=401, content={"error": "Bạn cần đăng nhập."})
+            return JSONResponse({"error": "Bạn cần đăng nhập."}, status_code=401)
 
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
-            return JSONResponse(status_code=404, content={"error": "Không tìm thấy người dùng."})
+            return JSONResponse({"error": "Không tìm thấy người dùng."}, status_code=404)
 
-        info = calculate_user_health_info(user)
+        latest_record = (
+            db.query(WeightRecord)
+            .filter(WeightRecord.user_id == user_id)
+            .order_by(desc(WeightRecord.record_date), desc(WeightRecord.id))
+            .first()
+        )
+
+        latest_weight = latest_record.weight if latest_record else None
+        info = calculate_user_health_info(user, latest_weight)
+
         if not info:
             return JSONResponse(
-                status_code=400,
-                content={"error": "Vui lòng cập nhật đầy đủ chiều cao, cân nặng, tuổi, giới tính và mức vận động trong hồ sơ."}
+                {"error": "Vui lòng cập nhật đầy đủ chiều cao, tuổi, giới tính, mức vận động và thêm ít nhất 1 bản ghi cân nặng."},
+                status_code=400
             )
 
         user_prompt = "📆 Gợi ý thực đơn 30 ngày"
@@ -1364,8 +1393,7 @@ def generate_meal_plan_30_days(
         })
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"Lỗi tạo thực đơn 30 ngày: {str(e)}"})
-
+        return JSONResponse({"error": f"Lỗi tạo thực đơn 30 ngày: {str(e)}"}, status_code=500)
 
 @app.post("/ai-chat/meal-plan")
 def ai_meal_plan_1_day(request: Request, db: Session = Depends(get_db)):
