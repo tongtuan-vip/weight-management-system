@@ -12,23 +12,18 @@
             </div>
         </div>
 
-        <div class="user-box">
+        <a href="/profile" class="user-box profile-link {% if request.url.path == '/profile' %}active-profile{% endif %}">
             <div class="user-avatar">👤</div>
             <div class="sidebar-text">
                 <div class="user-name">{{ user.full_name if user else 'Người dùng' }}</div>
-                <div class="user-sub">Quản lý sức khỏe</div>
+                <div class="user-sub">Nhấn để xem hồ sơ</div>
             </div>
-        </div>
+        </a>
 
         <nav class="menu-list">
             <a href="/dashboard" class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}">
                 <span class="menu-icon">🏠</span>
                 <span class="sidebar-text">Dashboard</span>
-            </a>
-
-            <a href="/profile" class="menu-item {% if request.url.path == '/profile' %}active{% endif %}">
-                <span class="menu-icon">📝</span>
-                <span class="sidebar-text">Hồ sơ</span>
             </a>
 
             <a href="/weight" class="menu-item {% if request.url.path == '/weight' %}active{% endif %}">
@@ -37,7 +32,7 @@
             </a>
 
             <a href="/predict" class="menu-item {% if request.url.path == '/predict' %}active{% endif %}">
-                <span class="menu-icon">🤖</span>
+                <span class="menu-icon">📈</span>
                 <span class="sidebar-text">Dự đoán</span>
             </a>
 
@@ -45,18 +40,16 @@
                 <span class="menu-icon">💚</span>
                 <span class="sidebar-text">Sức khỏe</span>
             </a>
+
             <a href="/ai-chat" class="menu-item {% if request.url.path == '/ai-chat' %}active{% endif %}">
-    <span class="menu-icon">🤖</span>
-    <span class="sidebar-text">Trợ lý AI</span>
-</a>
-<a href="/analysis" class="menu-item {% if request.url.path == '/analysis' %}active{% endif %}">
-    <span class="menu-icon">📈</span>
-    <span class="sidebar-text">Phân tích</span>
-</a>
-<a href="/reminders" class="menu-item {% if request.url.path == '/reminders' %}active{% endif %}">
-    <span class="menu-icon">⏰</span>
-    <span class="sidebar-text">Nhắc nhở</span>
-</a>
+                <span class="menu-icon">🤖</span>
+                <span class="sidebar-text">Trợ lý AI</span>
+            </a>
+
+            <a href="/reminders" class="menu-item {% if request.url.path == '/reminders' %}active{% endif %}">
+                <span class="menu-icon">⏰</span>
+                <span class="sidebar-text">Nhắc nhở</span>
+            </a>
         </nav>
 
         <div class="sidebar-bottom">

@@ -29,6 +29,14 @@ load_dotenv()
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 gemini_client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
 
+def is_profile_complete(user):
+    return all([
+        user.age,
+        user.gender,
+        user.height,
+        user.target_weight,
+        user.activity_level
+    ])
 def suggest_default_reminder_times(wake_up_time=None, goal=None):
     breakfast = "07:00"
     lunch = "12:00"
@@ -292,6 +300,7 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
 
 
 @app.post("/profile")
+
 def save_profile(
     request: Request,
     age: int = Form(...),
@@ -333,6 +342,8 @@ def save_profile(
         )
         db.add(new_record)
         db.commit()
+    user.is_profile_completed = True
+    db.commit()
 
     # load lại để render đúng trạng thái sau khi lưu
     latest_record = get_latest_weight_record(db, user_id)
@@ -353,14 +364,28 @@ def save_profile(
 @app.get("/dashboard")
 def dashboard(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
+    
 
     if not user_id:
         return RedirectResponse(url="/login", status_code=302)
 
     user = db.query(User).filter(User.id == user_id).first()
+    show_profile_notice = False
+    if user and not is_profile_complete(user):
+        show_profile_notice = True
+
 
     latest_record = get_latest_weight_record(db, user_id)
     latest_weight = latest_record.weight if latest_record else None
+    return templates.TemplateResponse(
+        request,
+        "dashboard.html",
+        {
+            "user": user,
+            "show_profile_notice": show_profile_notice,
+            "latest_weight": latest_weight
+        }
+    )
 
     bmi = None
     body_type = None
@@ -386,6 +411,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         .order_by(WeightRecord.record_date.asc(), WeightRecord.id.asc())
         .all()
     )
+    
 
     labels = [r.record_date.strftime("%d/%m/%Y") for r in records]
     weights = [r.weight for r in records]
@@ -1475,78 +1501,6 @@ Thông tin người dùng:
 
     except Exception as e:
         return JSONResponse({"error": f"Lỗi Gemini: {str(e)}"}, status_code=500)
-@app.get("/analysis")
-def analysis_page(request: Request, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse(url="/login", status_code=303)
-
-    user = db.query(User).filter(User.id == user_id).first()
-
-    records = (
-        db.query(WeightRecord)
-        .filter(WeightRecord.user_id == user_id)
-        .order_by(WeightRecord.record_date.asc(), WeightRecord.id.asc())
-        .all()
-    )
-
-    if not records or len(records) < 2:
-        return templates.TemplateResponse(
-    request,
-    "analysis.html",
-    {
-        "user": user,
-        "records": records,
-        "message": "Cần ít nhất 2 bản ghi cân nặng để phân tích xu hướng."
-    }
-)
-
-    first_weight = records[0].weight
-    latest_weight = records[-1].weight
-    total_change = round(latest_weight - first_weight, 1)
-
-    total_days = (records[-1].record_date - records[0].record_date).days
-    total_days = total_days if total_days > 0 else 1
-
-    weekly_change = round((total_change / total_days) * 7, 2)
-
-    if total_change < 0:
-        trend_label = "Đang giảm"
-        trend_class = "text-good"
-    elif total_change > 0:
-        trend_label = "Đang tăng"
-        trend_class = "text-bad"
-    else:
-        trend_label = "Ổn định"
-        trend_class = "text-neutral"
-
-    if abs(weekly_change) > 1.2:
-        health_warning = "Tốc độ thay đổi cân nặng đang khá nhanh, nên theo dõi kỹ chế độ ăn và vận động."
-    elif abs(weekly_change) >= 0.3:
-        health_warning = "Tiến trình thay đổi cân nặng đang ở mức hợp lý."
-    else:
-        health_warning = "Cân nặng đang thay đổi khá chậm hoặc ổn định."
-
-    labels = [r.record_date.strftime("%d/%m/%Y") for r in records]
-    weights = [float(r.weight) for r in records]
-
-    return templates.TemplateResponse(
-        request,
-        "analysis.html",
-          {
-        
-        "user": user,
-        "records": records,
-        "labels": labels,
-        "weights": weights,
-        "first_weight": first_weight,
-        "latest_weight": latest_weight,
-        "total_change": total_change,
-        "weekly_change": weekly_change,
-        "trend_label": trend_label,
-        "trend_class": trend_class,
-        "health_warning": health_warning
-    })
 
 @app.get("/reminders")
 def reminders_page(request: Request, db: Session = Depends(get_db)):

@@ -15,6 +15,7 @@ class User(Base):
     current_weight = Column(Float, nullable=True)
     target_weight = Column(Float, nullable=True)
     activity_level = Column(String(50), nullable=True)
+   
 
     created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
 from sqlalchemy import Column, Integer, String, Float, TIMESTAMP, text, Date, ForeignKey
