@@ -128,40 +128,53 @@ body {
 .user-box {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 14px;
+    gap: 14px;
+    padding: 16px;
     border-radius: 20px;
-    background: rgba(255,255,255,0.10);
     margin-bottom: 18px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
 }
 
 .profile-link {
-    text-decoration: none;
-    color: #fff;
-    transition: all 0.2s ease;
+    text-decoration: none !important;
+    color: #fff !important;
+    transition: all 0.22s ease;
 }
 
 .profile-link:hover {
-    background: rgba(255,255,255,0.18);
+    background: linear-gradient(135deg, rgba(255,255,255,0.20), rgba(255,255,255,0.12));
     transform: translateY(-2px);
-    color: #fff;
+    color: #fff !important;
+}
+
+.profile-link:hover .user-sub {
+    opacity: 1;
+}
+
+.profile-link:focus,
+.profile-link:active,
+.profile-link:visited {
+    text-decoration: none !important;
+    color: #fff !important;
 }
 
 .active-profile {
-    background: rgba(255,255,255,0.22);
+    background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.14));
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10);
 }
 
 .user-avatar {
-    width: 54px;
-    height: 54px;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.14);
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 26px;
     flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
 .user-name {
@@ -169,12 +182,16 @@ body {
     font-weight: 800;
     line-height: 1.25;
     word-break: break-word;
+    text-decoration: none !important;
+    color: #fff;
 }
 
 .user-sub {
     font-size: 13px;
-    opacity: 0.92;
+    opacity: 0.88;
     margin-top: 4px;
+    text-decoration: none !important;
+    color: rgba(255,255,255,0.92);
 }
 
 .menu-list {
@@ -298,7 +315,6 @@ body {
         padding: 14px 10px;
     }
 }
-
 /* PAGE */
 .page-content {
     margin-left: 280px;
@@ -873,57 +889,4 @@ html[data-theme="dark"] .table thead th {
 }
 .chart-box {
     min-height: 300px;
-}
-.user-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px;
-    border-radius: 18px;
-
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(6px);
-
-    text-decoration: none;   /* ❌ bỏ gạch */
-    color: #fff;
-
-    transition: all 0.25s ease;
-}
-
-.user-card:hover {
-    background: rgba(255,255,255,0.18);
-    transform: translateY(-2px);
-}
-
-.user-avatar {
-    width: 54px;
-    height: 54px;
-    border-radius: 16px;
-
-    background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
-    
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 26px;
-}
-
-.user-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.user-name {
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-.user-sub {
-    font-size: 13px;
-    opacity: 0.85;
-    margin-top: 4px;
-
-    text-decoration: none; /* đảm bảo không gạch */
 }

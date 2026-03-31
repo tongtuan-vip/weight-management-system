@@ -1,3 +1,4 @@
+
 <div class="app-shell">
     <aside id="sidebar" class="sidebar">
         <div class="sidebar-top">
@@ -12,11 +13,11 @@
             </div>
         </div>
 
-        <a href="/profile" class="user-card">
+     <a href="/profile" class="user-box profile-link {% if request.url.path == '/profile' %}active-profile{% endif %}">
     <div class="user-avatar">👤</div>
-    <div class="user-info">
+    <div class="sidebar-text">
         <div class="user-name">{{ user.full_name if user else 'Người dùng' }}</div>
-        <div class="user-sub">Xem hồ sơ cá nhân</div>
+        <div class="user-sub">Nhấn để xem hồ sơ</div>
     </div>
 </a>
 
