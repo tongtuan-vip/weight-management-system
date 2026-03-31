@@ -12,13 +12,13 @@
             </div>
         </div>
 
-        <a href="/profile" class="user-box profile-link {% if request.url.path == '/profile' %}active-profile{% endif %}">
-            <div class="user-avatar">👤</div>
-            <div class="sidebar-text">
-                <div class="user-name">{{ user.full_name if user else 'Người dùng' }}</div>
-                <div class="user-sub">Nhấn để xem hồ sơ</div>
-            </div>
-        </a>
+        <a href="/profile" class="user-card">
+    <div class="user-avatar">👤</div>
+    <div class="user-info">
+        <div class="user-name">{{ user.full_name if user else 'Người dùng' }}</div>
+        <div class="user-sub">Xem hồ sơ cá nhân</div>
+    </div>
+</a>
 
         <nav class="menu-list">
             <a href="/dashboard" class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}">
