@@ -364,28 +364,18 @@ def save_profile(
 @app.get("/dashboard")
 def dashboard(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
-    
 
     if not user_id:
         return RedirectResponse(url="/login", status_code=302)
 
     user = db.query(User).filter(User.id == user_id).first()
+
     show_profile_notice = False
     if user and not is_profile_complete(user):
         show_profile_notice = True
 
-
     latest_record = get_latest_weight_record(db, user_id)
     latest_weight = latest_record.weight if latest_record else None
-    return templates.TemplateResponse(
-        request,
-        "dashboard.html",
-        {
-            "user": user,
-            "show_profile_notice": show_profile_notice,
-            "latest_weight": latest_weight
-        }
-    )
 
     bmi = None
     body_type = None
@@ -411,7 +401,6 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         .order_by(WeightRecord.record_date.asc(), WeightRecord.id.asc())
         .all()
     )
-    
 
     labels = [r.record_date.strftime("%d/%m/%Y") for r in records]
     weights = [r.weight for r in records]
@@ -452,7 +441,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         target_date_prediction = predict_target_date(records, user.target_weight if user else None)
 
     goal = "Chưa xác định"
-    if user.target_weight and latest_weight:
+    if user and user.target_weight and latest_weight:
         if user.target_weight < latest_weight:
             goal = "Giảm cân"
         elif user.target_weight > latest_weight:
@@ -462,12 +451,11 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
     streak = calculate_weight_streak(records)
 
-    # ===== Progress goal + % hoàn thành =====
     progress_percent = 0
     remaining_weight = None
     goal_direction = None
 
-    if records and len(records) > 0 and user and user.target_weight:
+    if records and user and user.target_weight:
         first_weight = records[0].weight
         current_weight = latest_weight
         target_weight = user.target_weight
@@ -504,7 +492,6 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         request,
         "dashboard.html",
         {
-            
             "user": user,
             "bmi": bmi,
             "goal": goal,
@@ -518,14 +505,12 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "streak": streak,
             "target_date_prediction": target_date_prediction,
             "has_today_record": has_today_record,
-
-            # mới thêm
             "progress_percent": progress_percent,
             "remaining_weight": remaining_weight,
             "goal_direction": goal_direction,
+            "show_profile_notice": show_profile_notice,
         }
     )
-
 
 @app.get("/logout")
 def logout(request: Request):
