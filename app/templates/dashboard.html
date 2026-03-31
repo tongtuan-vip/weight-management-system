@@ -319,6 +319,12 @@
 {% block content %}
 <div class="dashboard-wrap">
 
+    {% if show_profile_notice %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center" style="border-radius: 14px; margin-bottom: 16px;">
+    <div>⚠️ Bạn chưa hoàn thiện hồ sơ. Hãy vào phần hồ sơ để cập nhật thông tin.</div>
+    <a href="/profile" class="btn btn-sm btn-success">Cập nhật ngay</a>
+</div>
+{% endif %}
     {% if bmi %}
         {% if bmi < 18.5 %}
             {% set bmi_note = "Bạn đang ở mức thiếu cân, nên ưu tiên dinh dưỡng và tập tăng cơ." %}
@@ -916,21 +922,18 @@
     });
 </script>
 {% endif %}
-{% if show_profile_notice %}
-<div class="alert alert-warning d-flex justify-content-between align-items-center" style="border-radius: 14px; margin-bottom: 16px;">
-    <div>⚠️ Bạn chưa hoàn thiện hồ sơ. Hãy vào phần hồ sơ để cập nhật thông tin.</div>
-    <a href="/profile" class="btn btn-sm btn-success">Cập nhật ngay</a>
-</div>
-{% endif %}
+
 
 {% if not has_today_record %}
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 3000;">
     <div id="weightReminderToast" class="toast text-bg-warning border-0" role="alert">
         <div class="d-flex">
             <div class="toast-body">
-                Bạn chưa cập nhật cân nặng hôm nay. Hãy thêm bản ghi mới nhé.
+                ⚠️ Bạn chưa cập nhật cân nặng hôm nay. 
+                <a href="/weight" class="fw-bold text-dark text-decoration-underline">
+                    Nhấn vào đây để cập nhật
+                </a>
             </div>
-            <a href="/weight" class="btn btn-sm btn-success">Cập nhật ngay</a>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     </div>
