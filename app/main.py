@@ -1346,16 +1346,9 @@ def generate_meal_plan_7_days(request: Request, db: Session = Depends(get_db)):
                 status_code=400
             )
 
-        user_prompt = "🗓️ Gợi ý thực đơn 7 ngày"
         answer = get_meal_plan_7_days(info["goal"], info["target_calories"])
 
-        user_msg = save_chat_message(db, user_id, "user", user_prompt)
-        assistant_msg = save_chat_message(db, user_id, "assistant", answer)
-
         return JSONResponse({
-            "user_message_id": user_msg.id,
-            "user_content": user_prompt,
-            "assistant_message_id": assistant_msg.id,
             "answer": answer,
             "rendered_answer": answer
         })
@@ -1389,16 +1382,9 @@ def generate_meal_plan_30_days(request: Request, db: Session = Depends(get_db)):
                 status_code=400
             )
 
-        user_prompt = "📆 Gợi ý thực đơn 30 ngày"
         answer = get_meal_plan_30_days(info["goal"], info["target_calories"])
 
-        user_msg = save_chat_message(db, user_id, "user", user_prompt)
-        assistant_msg = save_chat_message(db, user_id, "assistant", answer)
-
         return JSONResponse({
-            "user_message_id": user_msg.id,
-            "user_content": user_prompt,
-            "assistant_message_id": assistant_msg.id,
             "answer": answer,
             "rendered_answer": answer
         })
@@ -1421,8 +1407,6 @@ def ai_meal_plan_1_day(request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return JSONResponse({"error": "Không tìm thấy người dùng"}, status_code=404)
-
-    user_prompt = "📋 Gợi ý thực đơn 1 ngày"
 
     latest_record = (
         db.query(WeightRecord)
@@ -1465,21 +1449,12 @@ Thông tin người dùng:
 
         answer = response.text.strip() if response.text else "Mình chưa thể gợi ý thực đơn lúc này."
 
-        # Lưu user message
-        user_msg = save_chat_message(db, user_id, "user", user_prompt)
-
-        # Lưu assistant message
-        assistant_msg = save_chat_message(db, user_id, "assistant", answer)
-
         rendered_answer = markdown.markdown(
             answer,
             extensions=["extra", "nl2br", "fenced_code"]
         )
 
         return JSONResponse({
-            "user_message_id": user_msg.id,
-            "user_content": user_prompt,
-            "assistant_message_id": assistant_msg.id,
             "answer": answer,
             "rendered_answer": rendered_answer
         })
