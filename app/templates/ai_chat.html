@@ -448,17 +448,6 @@
                     <div class="quick-chip" onclick="setQuickQuestion('Tôi nên tập gì để giảm mỡ?')">
                         🏃 Tôi nên tập gì để giảm mỡ?
                     </div>
-                    <div class="quick-chip primary" onclick="generateMealPlan()">
-    📋 Gợi ý thực đơn 1 ngày
-</div>
-
-<div class="quick-chip primary" onclick="generateMealPlan7Days()">
-    🗓️ Gợi ý thực đơn 7 ngày
-</div>
-
-<div class="quick-chip primary" onclick="generateMealPlan30Days()">
-    📆 Gợi ý thực đơn 30 ngày
-</div>
                 </div>
             </div>
 
@@ -704,107 +693,6 @@
         }
     });
 
-    async function generateMealPlan() {
-    const typingBox = document.getElementById("typingBox");
-    typingBox.style.display = "block";
-
-    try {
-        const res = await fetch("/ai-chat/meal-plan", {
-            method: "POST"
-        });
-
-        const data = await res.json();
-        typingBox.style.display = "none";
-
-        if (!res.ok) {
-            appendMessage("assistant", data.error || "Không thể tạo thực đơn lúc này.");
-            return;
-        }
-
-        appendMessage(
-            "user",
-            data.user_content || "📋 Gợi ý thực đơn 1 ngày",
-            data.user_message_id || null
-        );
-
-        appendMessage(
-            "assistant",
-            data.rendered_answer || data.answer || "Chưa có thực đơn.",
-            data.assistant_message_id || null
-        );
-    } catch (err) {
-        typingBox.style.display = "none";
-        appendMessage("assistant", "Không thể kết nối tới AI lúc này.");
-    }
-}
-    
-async function generateMealPlan7Days() {
-    const typingBox = document.getElementById("typingBox");
-    typingBox.style.display = "block";
-
-    try {
-        const res = await fetch("/ai-chat/meal-plan-7-days", {
-            method: "POST"
-        });
-
-        const data = await res.json();
-        typingBox.style.display = "none";
-
-        if (!res.ok) {
-            appendMessage("assistant", data.error || "Không thể tạo thực đơn 7 ngày lúc này.");
-            return;
-        }
-
-        appendMessage(
-            "user",
-            data.user_content || "🗓️ Gợi ý thực đơn 7 ngày",
-            data.user_message_id || null
-        );
-
-        appendMessage(
-            "assistant",
-            data.rendered_answer || data.answer || "Chưa có thực đơn 7 ngày.",
-            data.assistant_message_id || null
-        );
-    } catch (err) {
-        typingBox.style.display = "none";
-        appendMessage("assistant", "Không thể kết nối tới AI lúc này.");
-    }
-}
-
-async function generateMealPlan30Days() {
-    const typingBox = document.getElementById("typingBox");
-    typingBox.style.display = "block";
-
-    try {
-        const res = await fetch("/ai-chat/meal-plan-30-days", {
-            method: "POST"
-        });
-
-        const data = await res.json();
-        typingBox.style.display = "none";
-
-        if (!res.ok) {
-            appendMessage("assistant", data.error || "Không thể tạo thực đơn 30 ngày lúc này.");
-            return;
-        }
-
-        appendMessage(
-            "user",
-            data.user_content || "📆 Gợi ý thực đơn 30 ngày",
-            data.user_message_id || null
-        );
-
-        appendMessage(
-            "assistant",
-            data.rendered_answer || data.answer || "Chưa có thực đơn 30 ngày.",
-            data.assistant_message_id || null
-        );
-    } catch (err) {
-        typingBox.style.display = "none";
-        appendMessage("assistant", "Không thể kết nối tới AI lúc này.");
-    }
-}
 
 </script>
 {% endblock %}

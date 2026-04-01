@@ -13,7 +13,7 @@
             </div>
         </div>
 
-     <a href="/profile" class="user-box profile-link {% if request.url.path == '/profile' %}active-profile{% endif %}">
+     <a href="/profile" class="user-box profile-link {% if request.url.path == '/profile' %}active{% endif %}">
     <div class="user-avatar">👤</div>
     <div class="sidebar-text">
         <div class="user-name">{{ user.full_name if user else 'Người dùng' }}</div>
@@ -46,6 +46,15 @@
                 <span class="menu-icon">🤖</span>
                 <span class="sidebar-text">Trợ lý AI</span>
             </a>
+            <a href="/diet" class="menu-item {% if request.url.path == '/diet' %}active{% endif %}">
+    <span class="menu-icon">🥗</span>
+    <span class="sidebar-text">Dinh dưỡng</span>
+</a>
+
+<a href="/exercise" class="menu-item {% if request.url.path == '/exercise' %}active{% endif %}">
+    <span class="menu-icon">💪</span>
+    <span class="sidebar-text">Bài tập</span>
+</a>
 
             <a href="/reminders" class="menu-item {% if request.url.path == '/reminders' %}active{% endif %}">
                 <span class="menu-icon">⏰</span>

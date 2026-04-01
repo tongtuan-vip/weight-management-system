@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Bài tập{% endblock %}
+
+{% block content %}
+<div class="page-header header-blue mb-4">
+    <div class="row align-items-center g-2">
+        <div class="col-md-8">
+            <h1>Trang bài tập</h1>
+            <p>Gợi ý kế hoạch luyện tập phù hợp với mục tiêu và thể trạng của bạn.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <span class="status-chip">💪 Exercise Plan</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="summary-box h-100">
+            <div class="summary-title">Mục tiêu hiện tại</div>
+            <div class="summary-value text-success">{{ goal }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="summary-box h-100">
+            <div class="summary-title">Cân nặng hiện tại</div>
+            <div class="summary-value">
+                {% if latest_weight %}{{ latest_weight }} kg{% else %}Chưa có{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="summary-box h-100">
+            <div class="summary-title">Tần suất gợi ý</div>
+            <div class="summary-value">
+                {% if goal == "Giảm cân" %}
+                    5 buổi/tuần
+                {% elif goal == "Tăng cân" %}
+                    4 buổi/tuần
+                {% else %}
+                    3 - 4 buổi/tuần
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="summary-box h-100">
+            <div class="summary-title">Thời lượng / buổi</div>
+            <div class="summary-value">
+                {% if goal == "Giảm cân" %}
+                    25 - 40 phút
+                {% elif goal == "Tăng cân" %}
+                    30 - 45 phút
+                {% else %}
+                    20 - 30 phút
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="content-card mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div class="section-title mb-0">Kế hoạch tập luyện</div>
+                <span class="exercise-badge">Phù hợp theo mục tiêu</span>
+            </div>
+
+            <p class="text-muted mb-4">
+                Dưới đây là lịch tập cơ bản. Bạn cũng có thể bấm nút để AI gợi ý chi tiết hơn.
+            </p>
+
+            <div class="d-flex gap-2 flex-wrap mb-4">
+                <button class="btn btn-success px-4 exercise-btn" onclick="generateExercisePlanAI()">
+                    🤖 Gợi ý bài tập bằng AI
+                </button>
+                <a href="/weight" class="btn btn-outline-success px-4 exercise-btn">
+                    ⚖️ Cập nhật cân nặng
+                </a>
+            </div>
+
+            <div id="exerciseAiResult" class="exercise-result-box mb-4" style="display:none;">
+                <div class="exercise-result-header">
+                    <div class="section-title mb-0">Gợi ý từ AI</div>
+                </div>
+                <div id="exerciseAiContent" class="exercise-result-content"></div>
+            </div>
+
+            <div class="section-title">Lịch tập gợi ý 7 ngày</div>
+
+            {% if goal == "Giảm cân" %}
+                <div class="schedule-item"><strong>Thứ 2:</strong> Đi bộ nhanh hoặc cardio nhẹ 30 phút</div>
+                <div class="schedule-item"><strong>Thứ 3:</strong> Squat, plank, jumping jack, mountain climber</div>
+                <div class="schedule-item"><strong>Thứ 4:</strong> Đi bộ nhẹ hoặc đạp xe 20 - 30 phút</div>
+                <div class="schedule-item"><strong>Thứ 5:</strong> Bài tập toàn thân tại nhà</div>
+                <div class="schedule-item"><strong>Thứ 6:</strong> Cardio 30 phút + giãn cơ</div>
+                <div class="schedule-item"><strong>Thứ 7:</strong> Yoga nhẹ hoặc đi bộ thư giãn</div>
+                <div class="schedule-item"><strong>Chủ nhật:</strong> Nghỉ ngơi, phục hồi cơ thể</div>
+            {% elif goal == "Tăng cân" %}
+                <div class="schedule-item"><strong>Thứ 2:</strong> Chân + squat + lunges</div>
+                <div class="schedule-item"><strong>Thứ 3:</strong> Ngực + chống đẩy + tay sau</div>
+                <div class="schedule-item"><strong>Thứ 4:</strong> Nghỉ hoặc giãn cơ nhẹ</div>
+                <div class="schedule-item"><strong>Thứ 5:</strong> Lưng + vai + core cơ bản</div>
+                <div class="schedule-item"><strong>Thứ 6:</strong> Toàn thân cường độ vừa</div>
+                <div class="schedule-item"><strong>Thứ 7:</strong> Đi bộ nhẹ, thư giãn cơ</div>
+                <div class="schedule-item"><strong>Chủ nhật:</strong> Nghỉ ngơi</div>
+            {% else %}
+                <div class="schedule-item"><strong>Thứ 2:</strong> Đi bộ nhanh 20 - 30 phút</div>
+                <div class="schedule-item"><strong>Thứ 3:</strong> Bài tập cơ bản toàn thân</div>
+                <div class="schedule-item"><strong>Thứ 4:</strong> Nghỉ hoặc giãn cơ</div>
+                <div class="schedule-item"><strong>Thứ 5:</strong> Cardio nhẹ</div>
+                <div class="schedule-item"><strong>Thứ 6:</strong> Yoga hoặc vận động tại nhà</div>
+                <div class="schedule-item"><strong>Thứ 7:</strong> Đi bộ thư giãn</div>
+                <div class="schedule-item"><strong>Chủ nhật:</strong> Nghỉ ngơi</div>
+            {% endif %}
+        </div>
+
+        <div class="content-card">
+            <div class="section-title">Bài tập phù hợp</div>
+            <div class="row g-3 mt-1">
+                {% if goal == "Giảm cân" %}
+                    <div class="col-md-6"><div class="mini-card">🏃 Đi bộ nhanh / chạy bộ nhẹ</div></div>
+                    <div class="col-md-6"><div class="mini-card">🔥 Jumping Jack</div></div>
+                    <div class="col-md-6"><div class="mini-card">🦵 Squat</div></div>
+                    <div class="col-md-6"><div class="mini-card">🧘 Plank / giãn cơ</div></div>
+                {% elif goal == "Tăng cân" %}
+                    <div class="col-md-6"><div class="mini-card">💪 Chống đẩy</div></div>
+                    <div class="col-md-6"><div class="mini-card">🦵 Squat tăng sức mạnh</div></div>
+                    <div class="col-md-6"><div class="mini-card">🏋️ Bài tập toàn thân</div></div>
+                    <div class="col-md-6"><div class="mini-card">🧱 Lunges / core cơ bản</div></div>
+                {% else %}
+                    <div class="col-md-6"><div class="mini-card">🚶 Đi bộ</div></div>
+                    <div class="col-md-6"><div class="mini-card">🧘 Yoga nhẹ</div></div>
+                    <div class="col-md-6"><div class="mini-card">💪 Bài tập cơ bản tại nhà</div></div>
+                    <div class="col-md-6"><div class="mini-card">🤸 Giãn cơ</div></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="content-card mb-4">
+            <div class="section-title">Lưu ý khi tập</div>
+            <ul class="feature-list mb-0">
+                <li>Khởi động 5 - 10 phút trước khi tập</li>
+                <li>Không tập quá sức khi mới bắt đầu</li>
+                <li>Uống đủ nước trong ngày</li>
+                <li>Ngủ đủ giấc để cơ thể phục hồi</li>
+                <li>Kết hợp tập luyện với chế độ ăn hợp lý</li>
+            </ul>
+        </div>
+
+        <div class="content-card mb-4">
+            <div class="section-title">Mức độ phù hợp</div>
+            <div class="mini-card">
+                {% if goal == "Giảm cân" %}
+                    Ưu tiên cardio, bài tập toàn thân và duy trì đều đặn.
+                {% elif goal == "Tăng cân" %}
+                    Ưu tiên bài tập sức mạnh và thời gian phục hồi hợp lý.
+                {% else %}
+                    Ưu tiên vận động đều, nhẹ nhàng và bền vững.
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="quote-box">
+            <div class="summary-title">Mẹo nhỏ</div>
+            <div class="summary-value">
+                Duy trì đều đặn quan trọng hơn tập quá nặng trong thời gian ngắn.
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.content-card{
+    background:#fff;
+    border-radius:24px;
+    padding:24px;
+    box-shadow:0 10px 26px rgba(0,0,0,0.06);
+    border:1px solid var(--border-color);
+}
+
+.mini-card{
+    background:var(--bg-soft);
+    border:1px solid var(--border-color);
+    border-radius:18px;
+    padding:18px;
+    font-weight:600;
+}
+
+.feature-list{
+    padding-left:18px;
+}
+
+.feature-list li{
+    margin-bottom:10px;
+}
+
+.schedule-item{
+    background:var(--bg-soft);
+    border:1px solid var(--border-color);
+    border-radius:16px;
+    padding:14px 16px;
+    margin-bottom:12px;
+}
+
+.exercise-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 14px;
+    border-radius:999px;
+    background:rgba(25, 135, 84, 0.10);
+    color:#198754;
+    font-size:13px;
+    font-weight:700;
+}
+
+.exercise-btn{
+    border-radius:14px;
+    font-weight:700;
+    min-height:46px;
+}
+
+.exercise-result-box{
+    background:var(--bg-soft);
+    border:1px solid var(--border-color);
+    border-radius:20px;
+    padding:18px;
+}
+
+.exercise-result-header{
+    margin-bottom:12px;
+}
+
+.exercise-result-content h4{
+    font-size:20px;
+    font-weight:800;
+    margin-bottom:12px;
+}
+
+.exercise-result-content p{
+    margin-bottom:10px;
+    line-height:1.7;
+}
+
+.exercise-result-content ul,
+.exercise-result-content ol{
+    padding-left:20px;
+    margin-bottom:12px;
+}
+
+.exercise-result-content li{
+    margin-bottom:8px;
+}
+
+.exercise-loading{
+    color:var(--text-muted);
+    font-style:italic;
+}
+
+@media (max-width: 768px){
+    .exercise-btn{
+        width:100%;
+    }
+}
+</style>
+
+<script>
+async function generateExercisePlanAI() {
+    const resultBox = document.getElementById("exerciseAiResult");
+    const resultContent = document.getElementById("exerciseAiContent");
+
+    resultBox.style.display = "block";
+    resultContent.innerHTML = '<div class="exercise-loading">AI đang tạo kế hoạch tập luyện cho bạn...</div>';
+
+    try {
+        const res = await fetch("/exercise/ai-plan", {
+            method: "POST"
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            resultContent.innerHTML = `<p>${data.error || "Không thể tạo kế hoạch bài tập lúc này."}</p>`;
+            return;
+        }
+
+        resultContent.innerHTML = data.rendered_answer || data.answer || "Chưa có dữ liệu.";
+    } catch (err) {
+        resultContent.innerHTML = "<p>Không thể kết nối tới hệ thống.</p>";
+    }
+}
+</script>
+{% endblock %}

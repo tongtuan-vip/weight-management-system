@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}Dinh dưỡng{% endblock %}
+
+{% block content %}
+<div class="page-header header-blue mb-4">
+    <div class="row align-items-center g-2">
+        <div class="col-md-8">
+            <h1>Trang dinh dưỡng</h1>
+            <p>Gợi ý chế độ ăn và thực đơn phù hợp với mục tiêu sức khỏe của bạn.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <span class="status-chip">🥗 Nutrition Plan</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="summary-box h-100">
+            <div class="summary-title">Mục tiêu hiện tại</div>
+            <div class="summary-value text-success">{{ goal }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="summary-box h-100">
+            <div class="summary-title">Cân nặng hiện tại</div>
+            <div class="summary-value">
+                {% if latest_weight %}{{ latest_weight }} kg{% else %}Chưa có{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="summary-box h-100">
+            <div class="summary-title">BMI</div>
+            <div class="summary-value">
+                {% if bmi %}{{ bmi }}{% else %}Chưa có{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="summary-box h-100">
+            <div class="summary-title">Calo mục tiêu / ngày</div>
+            <div class="summary-value">
+                {% if target_calories %}{{ target_calories }} kcal{% else %}Chưa có{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="content-card mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div class="section-title mb-0">Thực đơn gợi ý</div>
+                <span class="diet-badge">Cá nhân hóa theo hồ sơ</span>
+            </div>
+
+            <p class="text-muted mb-4">
+                Chọn loại thực đơn bạn muốn xem. Hệ thống sẽ gợi ý theo mục tiêu hiện tại của bạn.
+            </p>
+
+            <div class="d-flex gap-2 flex-wrap mb-4">
+                <button class="btn btn-success px-4 diet-btn" onclick="generateDietPlan1Day()">
+                    📋 Thực đơn 1 ngày
+                </button>
+                <button class="btn btn-outline-success px-4 diet-btn" onclick="generateDietPlan7Days()">
+                    🗓️ Thực đơn 7 ngày
+                </button>
+                <button class="btn btn-outline-success px-4 diet-btn" onclick="generateDietPlan30Days()">
+                    📆 Thực đơn 30 ngày
+                </button>
+            </div>
+
+            <div id="dietAiResult" class="diet-result-box" style="display:none;">
+                <div class="diet-result-header">
+                    <div class="section-title mb-0">Kết quả gợi ý</div>
+                </div>
+                <div id="dietAiContent" class="diet-result-content"></div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="section-title">Nguyên tắc dinh dưỡng phù hợp</div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-md-4">
+                    <div class="mini-card h-100">
+                        <div class="mini-title">🥩 Protein</div>
+                        <p class="mb-0">
+                            Ưu tiên trứng, cá, ức gà, thịt nạc, sữa, đậu phụ để duy trì và phát triển cơ bắp.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mini-card h-100">
+                        <div class="mini-title">🍚 Carb tốt</div>
+                        <p class="mb-0">
+                            Chọn cơm với lượng hợp lý, yến mạch, khoai lang, bánh mì nguyên cám để có năng lượng bền hơn.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mini-card h-100">
+                        <div class="mini-title">🥑 Chất béo tốt</div>
+                        <p class="mb-0">
+                            Có thể bổ sung hạnh nhân, óc chó, bơ, dầu oliu với lượng vừa phải trong ngày.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="content-card mb-4">
+            <div class="section-title">Nên ăn</div>
+            <ul class="feature-list mb-0">
+                <li>Rau xanh và trái cây ít ngọt</li>
+                <li>Trứng, cá, ức gà, thịt nạc</li>
+                <li>Khoai lang, yến mạch, gạo lứt</li>
+                <li>Sữa chua không đường</li>
+                <li>Uống đủ nước mỗi ngày</li>
+            </ul>
+        </div>
+
+        <div class="content-card mb-4">
+            <div class="section-title">Hạn chế</div>
+            <ul class="feature-list mb-0">
+                <li>Nước ngọt và trà sữa</li>
+                <li>Đồ chiên rán nhiều dầu mỡ</li>
+                <li>Ăn khuya thường xuyên</li>
+                <li>Bánh kẹo quá ngọt</li>
+                <li>Bỏ bữa sáng</li>
+            </ul>
+        </div>
+
+        <div class="quote-box">
+            <div class="summary-title">Lưu ý</div>
+            <div class="summary-value">
+                Chế độ ăn hiệu quả nhất khi đi kèm theo dõi cân nặng định kỳ và luyện tập đều đặn.
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.content-card{
+    background:#fff;
+    border-radius:24px;
+    padding:24px;
+    box-shadow:0 10px 26px rgba(0,0,0,0.06);
+    border:1px solid var(--border-color);
+}
+
+.mini-card{
+    background:var(--bg-soft);
+    border:1px solid var(--border-color);
+    border-radius:18px;
+    padding:18px;
+}
+
+.mini-title{
+    font-size:17px;
+    font-weight:700;
+    margin-bottom:8px;
+}
+
+.feature-list{
+    padding-left:18px;
+}
+
+.feature-list li{
+    margin-bottom:10px;
+}
+
+.diet-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 14px;
+    border-radius:999px;
+    background:rgba(25, 135, 84, 0.10);
+    color:#198754;
+    font-size:13px;
+    font-weight:700;
+}
+
+.diet-btn{
+    border-radius:14px;
+    font-weight:700;
+    min-height:46px;
+}
+
+.diet-result-box{
+    background:var(--bg-soft);
+    border:1px solid var(--border-color);
+    border-radius:20px;
+    padding:18px;
+}
+
+.diet-result-header{
+    margin-bottom:12px;
+}
+
+.diet-result-content h4{
+    font-size:20px;
+    font-weight:800;
+    margin-bottom:12px;
+}
+
+.diet-result-content p{
+    margin-bottom:10px;
+    line-height:1.7;
+}
+
+.diet-result-content ul,
+.diet-result-content ol{
+    padding-left:20px;
+    margin-bottom:12px;
+}
+
+.diet-result-content li{
+    margin-bottom:8px;
+}
+
+.diet-loading{
+    color:var(--text-muted);
+    font-style:italic;
+}
+
+@media (max-width: 768px){
+    .diet-btn{
+        width:100%;
+    }
+}
+</style>
+
+<script>
+async function generateDietPlan1Day() {
+    const resultBox = document.getElementById("dietAiResult");
+    const resultContent = document.getElementById("dietAiContent");
+
+    resultBox.style.display = "block";
+    resultContent.innerHTML = '<div class="diet-loading">Đang tạo thực đơn 1 ngày cho bạn...</div>';
+
+    try {
+        const res = await fetch("/diet/meal-plan", {
+            method: "POST"
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            resultContent.innerHTML = `<p>${data.error || "Không thể tạo thực đơn lúc này."}</p>`;
+            return;
+        }
+
+        resultContent.innerHTML = data.rendered_answer || data.answer || "Chưa có dữ liệu.";
+    } catch (err) {
+        resultContent.innerHTML = "<p>Không thể kết nối tới hệ thống.</p>";
+    }
+}
+
+async function generateDietPlan7Days() {
+    const resultBox = document.getElementById("dietAiResult");
+    const resultContent = document.getElementById("dietAiContent");
+
+    resultBox.style.display = "block";
+    resultContent.innerHTML = '<div class="diet-loading">Đang tạo thực đơn 7 ngày cho bạn...</div>';
+
+    try {
+        const res = await fetch("/diet/meal-plan-7-days", {
+            method: "POST"
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            resultContent.innerHTML = `<p>${data.error || "Không thể tạo thực đơn 7 ngày lúc này."}</p>`;
+            return;
+        }
+
+        resultContent.innerHTML = data.rendered_answer || data.answer || "Chưa có dữ liệu.";
+    } catch (err) {
+        resultContent.innerHTML = "<p>Không thể kết nối tới hệ thống.</p>";
+    }
+}
+
+async function generateDietPlan30Days() {
+    const resultBox = document.getElementById("dietAiResult");
+    const resultContent = document.getElementById("dietAiContent");
+
+    resultBox.style.display = "block";
+    resultContent.innerHTML = '<div class="diet-loading">Đang tạo thực đơn 30 ngày cho bạn...</div>';
+
+    try {
+        const res = await fetch("/diet/meal-plan-30-days", {
+            method: "POST"
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            resultContent.innerHTML = `<p>${data.error || "Không thể tạo thực đơn 30 ngày lúc này."}</p>`;
+            return;
+        }
+
+        resultContent.innerHTML = data.rendered_answer || data.answer || "Chưa có dữ liệu.";
+    } catch (err) {
+        resultContent.innerHTML = "<p>Không thể kết nối tới hệ thống.</p>";
+    }
+}
+</script>
+{% endblock %}

@@ -1319,7 +1319,7 @@ def get_meal_plan_30_days(goal, calories):
     <p><strong>Gợi ý chung:</strong> Với kế hoạch 30 ngày, bạn nên theo dõi cân nặng mỗi tuần để điều chỉnh khẩu phần phù hợp.</p>
     """
 
-@app.post("/ai-chat/meal-plan-7-days")
+@app.post("/diet/meal-plan-7-days")
 def generate_meal_plan_7_days(request: Request, db: Session = Depends(get_db)):
     try:
         user_id = request.session.get("user_id")
@@ -1362,7 +1362,7 @@ def generate_meal_plan_7_days(request: Request, db: Session = Depends(get_db)):
 
     except Exception as e:
         return JSONResponse({"error": f"Lỗi tạo thực đơn 7 ngày: {str(e)}"}, status_code=500)
-@app.post("/ai-chat/meal-plan-30-days")
+@app.post("/diet/meal-plan-30-days")
 def generate_meal_plan_30_days(request: Request, db: Session = Depends(get_db)):
     try:
         user_id = request.session.get("user_id")
@@ -1406,7 +1406,7 @@ def generate_meal_plan_30_days(request: Request, db: Session = Depends(get_db)):
     except Exception as e:
         return JSONResponse({"error": f"Lỗi tạo thực đơn 30 ngày: {str(e)}"}, status_code=500)
 
-@app.post("/ai-chat/meal-plan")
+@app.post("/diet/meal-plan")
 def ai_meal_plan_1_day(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -1581,3 +1581,289 @@ def save_reminders(
     db.commit()
 
     return RedirectResponse(url="/reminders", status_code=303)
+@app.get("/diet")
+def diet_page(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=302)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    latest_record = get_latest_weight_record(db, user_id)
+    latest_weight = latest_record.weight if latest_record else None
+
+    goal = "Duy trì"
+    if user and user.target_weight and latest_weight:
+        if user.target_weight < latest_weight:
+            goal = "Giảm cân"
+        elif user.target_weight > latest_weight:
+            goal = "Tăng cân"
+
+    bmi = None
+    bmr = None
+    tdee = None
+    target_calories = None
+
+    if user and user.height and latest_weight and user.age and user.gender:
+        height_m = user.height / 100
+        bmi = round(latest_weight / (height_m ** 2), 2)
+
+        if user.gender.lower() == "nam":
+            bmr = 10 * latest_weight + 6.25 * user.height - 5 * user.age + 5
+        else:
+            bmr = 10 * latest_weight + 6.25 * user.height - 5 * user.age - 161
+
+        activity_map = {
+            "Ít vận động": 1.2,
+            "Vận động nhẹ": 1.375,
+            "Vận động vừa": 1.55,
+            "Vận động nhiều": 1.725
+        }
+
+        tdee = round(bmr * activity_map.get(user.activity_level, 1.2), 0)
+
+        if goal == "Giảm cân":
+            target_calories = int(tdee - 500)
+        elif goal == "Tăng cân":
+            target_calories = int(tdee + 300)
+        else:
+            target_calories = int(tdee)
+
+    return templates.TemplateResponse(
+        request,
+        "diet.html",
+        {
+            "user": user,
+            "goal": goal,
+            "bmi": bmi,
+            "bmr": round(bmr, 0) if bmr else None,
+            "tdee": int(tdee) if tdee else None,
+            "target_calories": target_calories,
+            "latest_weight": latest_weight,
+        }
+    )
+
+
+@app.get("/exercise")
+def exercise_page(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=302)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    latest_record = get_latest_weight_record(db, user_id)
+    latest_weight = latest_record.weight if latest_record else None
+
+    goal = "Duy trì"
+    if user and user.target_weight and latest_weight:
+        if user.target_weight < latest_weight:
+            goal = "Giảm cân"
+        elif user.target_weight > latest_weight:
+            goal = "Tăng cân"
+
+    return templates.TemplateResponse(
+        request,
+        "exercise.html",
+        {
+            "user": user,
+            "goal": goal,
+            "latest_weight": latest_weight,
+        }
+    )
+@app.post("/exercise/ai-plan")
+def exercise_ai_plan(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Chưa đăng nhập"}, status_code=401)
+
+    if not gemini_client:
+        return JSONResponse(
+            {"error": "Chưa cấu hình GEMINI_API_KEY trên server"},
+            status_code=500
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return JSONResponse({"error": "Không tìm thấy người dùng"}, status_code=404)
+
+    latest_record = (
+        db.query(WeightRecord)
+        .filter(WeightRecord.user_id == user_id)
+        .order_by(desc(WeightRecord.record_date), desc(WeightRecord.id))
+        .first()
+    )
+
+    latest_weight = latest_record.weight if latest_record else None
+
+    goal = "Duy trì"
+    if user and user.target_weight and latest_weight:
+        if user.target_weight < latest_weight:
+            goal = "Giảm cân"
+        elif user.target_weight > latest_weight:
+            goal = "Tăng cân"
+
+    bmi = None
+    if user and user.height and latest_weight:
+        height_m = user.height / 100
+        bmi = round(latest_weight / (height_m ** 2), 2)
+
+    prompt = f"""
+Bạn là chuyên gia hướng dẫn tập luyện cơ bản.
+Hãy gợi ý kế hoạch tập luyện bằng tiếng Việt, dễ áp dụng, an toàn cho người mới.
+
+Yêu cầu:
+- chia thành: mục tiêu, lịch tập 7 ngày, bài tập phù hợp, lưu ý
+- ngắn gọn, rõ ràng, dễ hiểu
+- phù hợp người Việt Nam
+- không dùng thuật ngữ quá khó
+- nếu người dùng đang muốn giảm cân thì ưu tiên cardio + bài tập toàn thân
+- nếu muốn tăng cân thì ưu tiên sức mạnh + phục hồi
+- nếu duy trì thì ưu tiên vận động đều và bền vững
+
+Thông tin người dùng:
+- Tuổi: {user.age if user and user.age else 'Chưa cập nhật'}
+- Giới tính: {user.gender if user and user.gender else 'Chưa cập nhật'}
+- Chiều cao: {str(user.height) + ' cm' if user and user.height else 'Chưa cập nhật'}
+- Cân nặng hiện tại: {str(latest_weight) + ' kg' if latest_weight else 'Chưa cập nhật'}
+- Cân nặng mục tiêu: {str(user.target_weight) + ' kg' if user and user.target_weight else 'Chưa cập nhật'}
+- Mức vận động: {user.activity_level if user and user.activity_level else 'Chưa cập nhật'}
+- BMI: {bmi if bmi else 'Chưa cập nhật'}
+- Mục tiêu hiện tại: {goal}
+"""
+
+    try:
+        response = gemini_client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=prompt
+        )
+
+        answer = response.text.strip() if response.text else "Mình chưa thể gợi ý bài tập lúc này."
+
+        rendered_answer = markdown.markdown(
+            answer,
+            extensions=["extra", "nl2br", "fenced_code"]
+        )
+
+        return JSONResponse({
+            "answer": answer,
+            "rendered_answer": rendered_answer
+        })
+
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi Gemini: {str(e)}"}, status_code=500)
+@app.get("/exercise")
+def exercise_page(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=302)
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    latest_record = (
+        db.query(WeightRecord)
+        .filter(WeightRecord.user_id == user_id)
+        .order_by(desc(WeightRecord.record_date), desc(WeightRecord.id))
+        .first()
+    )
+
+    latest_weight = latest_record.weight if latest_record else None
+
+    goal = "Duy trì"
+    if user and user.target_weight and latest_weight:
+        if user.target_weight < latest_weight:
+            goal = "Giảm cân"
+        elif user.target_weight > latest_weight:
+            goal = "Tăng cân"
+
+    return templates.TemplateResponse(
+        request,
+        "exercise.html",
+        {
+            "user": user,
+            "goal": goal,
+            "latest_weight": latest_weight
+        }
+    )
+@app.post("/exercise/ai-plan")
+def exercise_ai_plan(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse({"error": "Chưa đăng nhập"}, status_code=401)
+
+    if not gemini_client:
+        return JSONResponse(
+            {"error": "Chưa cấu hình GEMINI_API_KEY trên server"},
+            status_code=500
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return JSONResponse({"error": "Không tìm thấy người dùng"}, status_code=404)
+
+    latest_record = (
+        db.query(WeightRecord)
+        .filter(WeightRecord.user_id == user_id)
+        .order_by(desc(WeightRecord.record_date), desc(WeightRecord.id))
+        .first()
+    )
+
+    latest_weight = latest_record.weight if latest_record else None
+
+    goal = "Duy trì"
+    if user and user.target_weight and latest_weight:
+        if user.target_weight < latest_weight:
+            goal = "Giảm cân"
+        elif user.target_weight > latest_weight:
+            goal = "Tăng cân"
+
+    bmi = None
+    if user and user.height and latest_weight:
+        height_m = user.height / 100
+        bmi = round(latest_weight / (height_m ** 2), 2)
+
+    prompt = f"""
+Bạn là chuyên gia hướng dẫn tập luyện cơ bản.
+Hãy gợi ý kế hoạch tập luyện bằng tiếng Việt, dễ áp dụng, an toàn cho người mới.
+
+Yêu cầu:
+- chia thành: mục tiêu, lịch tập 7 ngày, bài tập phù hợp, lưu ý
+- ngắn gọn, rõ ràng, dễ hiểu
+- phù hợp người Việt Nam
+- không dùng thuật ngữ quá khó
+- nếu người dùng đang muốn giảm cân thì ưu tiên cardio + bài tập toàn thân
+- nếu muốn tăng cân thì ưu tiên sức mạnh + phục hồi
+- nếu duy trì thì ưu tiên vận động đều và bền vững
+
+Thông tin người dùng:
+- Tuổi: {user.age if user and user.age else 'Chưa cập nhật'}
+- Giới tính: {user.gender if user and user.gender else 'Chưa cập nhật'}
+- Chiều cao: {str(user.height) + ' cm' if user and user.height else 'Chưa cập nhật'}
+- Cân nặng hiện tại: {str(latest_weight) + ' kg' if latest_weight else 'Chưa cập nhật'}
+- Cân nặng mục tiêu: {str(user.target_weight) + ' kg' if user and user.target_weight else 'Chưa cập nhật'}
+- Mức vận động: {user.activity_level if user and user.activity_level else 'Chưa cập nhật'}
+- BMI: {bmi if bmi else 'Chưa cập nhật'}
+- Mục tiêu hiện tại: {goal}
+"""
+
+    try:
+        response = gemini_client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=prompt
+        )
+
+        answer = response.text.strip() if response.text else "Mình chưa thể gợi ý bài tập lúc này."
+
+        rendered_answer = markdown.markdown(
+            answer,
+            extensions=["extra", "nl2br", "fenced_code"]
+        )
+
+        return JSONResponse({
+            "answer": answer,
+            "rendered_answer": rendered_answer
+        })
+
+    except Exception as e:
+        return JSONResponse({"error": f"Lỗi Gemini: {str(e)}"}, status_code=500)
