@@ -76,12 +76,20 @@ body {
     margin-bottom: 18px;
 }
 
-.brand-wrap {
+.sidebar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 18px;
+}
+
+.brand-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+    margin-bottom: 0;
 }
 
 .brand-wrap .brand-icon {
@@ -109,8 +117,8 @@ body {
 }
 
 .toggle-btn {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     border: none;
     border-radius: 14px;
     background: rgba(255,255,255,0.14);
@@ -335,17 +343,17 @@ body {
 }
 /* PAGE */
 .page-content {
-    margin-left: 280px;
-    padding: 16px;
-    transition: margin-left 0.25s ease;
+    flex: 1;
+    padding: 16px 20px;
+    min-width: 0;
 }
 
 .page-content.expanded {
-    margin-left: 108px;
+    margin-left: 0;
 }
 
 .page-wrap {
-    max-width: 1320px;
+    max-width: 1500px;
 }
 
 .page-header {
