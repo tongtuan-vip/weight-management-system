@@ -11,7 +11,8 @@
     {% block head_extra %}{% endblock %}
 </head>
 <body>
-    {% if user %}
+   {% if user %}
+    <div class="app-shell">
         {% include 'sidebar.html' %}
 
         <div id="pageContent" class="page-content">
@@ -20,9 +21,10 @@
                 {% include 'footer.html' %}
             </div>
         </div>
-    {% else %}
-        {% block public_content %}{% endblock %}
-    {% endif %}
+    </div>
+{% else %}
+    {% block public_content %}{% endblock %}
+{% endif %}
 
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 3000;">
         {% if message %}

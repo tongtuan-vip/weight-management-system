@@ -1,72 +1,70 @@
-
-<div class="app-shell">
-    <aside id="sidebar" class="sidebar">
-        <div class="sidebar-top">
-            <div class="brand-wrap">
-                <div class="brand-icon">⚖️</div>
-                <div class="brand-text sidebar-text">FitTrack</div>
-            </div>
-
-            <div class="top-actions">
-                <button id="themeToggle" class="toggle-btn" type="button" title="Đổi giao diện">🌙</button>
-                <button id="toggleSidebar" class="toggle-btn" type="button" title="Thu gọn menu">☰</button>
-            </div>
+<aside id="sidebar" class="sidebar">
+    <div class="sidebar-top">
+        <div class="brand-wrap">
+            <div class="brand-icon">⚖️</div>
+            <div class="brand-text sidebar-text">FitTrack</div>
         </div>
 
-     <a href="/profile" class="user-box profile-link {% if request.url.path == '/profile' %}active{% endif %}">
-    <div class="user-avatar">👤</div>
-    <div class="sidebar-text">
-        <div class="user-name">{{ user.full_name if user else 'Người dùng' }}</div>
-        <div class="user-sub">Nhấn để xem hồ sơ</div>
+        <div class="top-actions">
+            <button id="themeToggle" class="toggle-btn" type="button" title="Đổi giao diện">🌙</button>
+            <button id="toggleSidebar" class="toggle-btn" type="button" title="Thu gọn menu">☰</button>
+        </div>
     </div>
-</a>
 
-        <nav class="menu-list">
-            <a href="/dashboard" class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}">
-                <span class="menu-icon">🏠</span>
-                <span class="sidebar-text">Dashboard</span>
-            </a>
-
-            <a href="/weight" class="menu-item {% if request.url.path == '/weight' %}active{% endif %}">
-                <span class="menu-icon">⚖️</span>
-                <span class="sidebar-text">Cân nặng</span>
-            </a>
-
-            <a href="/predict" class="menu-item {% if request.url.path == '/predict' %}active{% endif %}">
-                <span class="menu-icon">📈</span>
-                <span class="sidebar-text">Dự đoán</span>
-            </a>
-
-            <a href="/health" class="menu-item {% if request.url.path == '/health' %}active{% endif %}">
-                <span class="menu-icon">💚</span>
-                <span class="sidebar-text">Sức khỏe</span>
-            </a>
-
-            <a href="/ai-chat" class="menu-item {% if request.url.path == '/ai-chat' %}active{% endif %}">
-                <span class="menu-icon">🤖</span>
-                <span class="sidebar-text">Trợ lý AI</span>
-            </a>
-            <a href="/diet" class="menu-item {% if request.url.path == '/diet' %}active{% endif %}">
-    <span class="menu-icon">🥗</span>
-    <span class="sidebar-text">Dinh dưỡng</span>
-</a>
-
-<a href="/exercise" class="menu-item {% if request.url.path == '/exercise' %}active{% endif %}">
-    <span class="menu-icon">💪</span>
-    <span class="sidebar-text">Bài tập</span>
-</a>
-
-            <a href="/reminders" class="menu-item {% if request.url.path == '/reminders' %}active{% endif %}">
-                <span class="menu-icon">⏰</span>
-                <span class="sidebar-text">Nhắc nhở</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-bottom">
-            <a href="/logout" class="menu-item logout-item">
-                <span class="menu-icon">🚪</span>
-                <span class="sidebar-text">Đăng xuất</span>
-            </a>
+    <a href="/profile" class="user-box profile-link {% if request.url.path == '/profile' %}active{% endif %}">
+        <div class="user-avatar">👤</div>
+        <div class="sidebar-text">
+            <div class="user-name">{{ user.full_name if user else 'Người dùng' }}</div>
+            <div class="user-sub">Nhấn để xem hồ sơ</div>
         </div>
-    </aside>
-</div>
+    </a>
+
+    <nav class="menu-list">
+        <a href="/dashboard" class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}">
+            <span class="menu-icon">🏠</span>
+            <span class="sidebar-text">Dashboard</span>
+        </a>
+
+        <a href="/weight" class="menu-item {% if request.url.path == '/weight' %}active{% endif %}">
+            <span class="menu-icon">⚖️</span>
+            <span class="sidebar-text">Cân nặng</span>
+        </a>
+
+        <a href="/predict" class="menu-item {% if request.url.path == '/predict' %}active{% endif %}">
+            <span class="menu-icon">📈</span>
+            <span class="sidebar-text">Dự đoán</span>
+        </a>
+
+        <a href="/health" class="menu-item {% if request.url.path == '/health' %}active{% endif %}">
+            <span class="menu-icon">💚</span>
+            <span class="sidebar-text">Sức khỏe</span>
+        </a>
+
+        <a href="/ai-chat" class="menu-item {% if request.url.path == '/ai-chat' %}active{% endif %}">
+            <span class="menu-icon">🤖</span>
+            <span class="sidebar-text">Trợ lý AI</span>
+        </a>
+
+        <a href="/diet" class="menu-item {% if request.url.path == '/diet' %}active{% endif %}">
+            <span class="menu-icon">🥗</span>
+            <span class="sidebar-text">Dinh dưỡng</span>
+        </a>
+
+        <a href="/exercise" class="menu-item {% if request.url.path == '/exercise' %}active{% endif %}">
+            <span class="menu-icon">💪</span>
+            <span class="sidebar-text">Bài tập</span>
+        </a>
+
+        <a href="/reminders" class="menu-item {% if request.url.path == '/reminders' %}active{% endif %}">
+            <span class="menu-icon">⏰</span>
+            <span class="sidebar-text">Nhắc nhở</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+        <a href="/logout" class="menu-item logout-item">
+            <span class="menu-icon">🚪</span>
+            <span class="sidebar-text">Đăng xuất</span>
+        </a>
+    </div>
+</aside>
