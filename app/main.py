@@ -994,11 +994,13 @@ def ai_chat_send(
     user_id = request.session.get("user_id")
     if not user_id:
         return JSONResponse({"error": "Chưa đăng nhập"}, status_code=401)
+
     if not gemini_client:
         return JSONResponse(
-        {"error": "Chưa cấu hình GEMINI_API_KEY trên server"},
-        status_code=500
-    )
+            {"error": "Chưa cấu hình GEMINI_API_KEY trên server"},
+            status_code=500
+        )
+
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return JSONResponse({"error": "Không tìm thấy người dùng"}, status_code=404)
@@ -1068,7 +1070,6 @@ Lịch sử hội thoại gần đây:
 Câu hỏi mới của người dùng:
 {message}
 """
-    
 
     try:
         response = gemini_client.models.generate_content(
@@ -1080,7 +1081,18 @@ Câu hỏi mới của người dùng:
 
     except Exception as e:
         print("GEMINI ERROR:", repr(e))
-        return JSONResponse({"error": f"Lỗi Gemini: {str(e)}"}, status_code=500)
+        error_text = str(e)
+
+        if "503" in error_text or "UNAVAILABLE" in error_text:
+            return JSONResponse(
+                {"error": "AI đang bận do quá nhiều yêu cầu. Vui lòng thử lại sau vài giây."},
+                status_code=503
+            )
+
+        return JSONResponse(
+            {"error": f"Lỗi Gemini: {error_text}"},
+            status_code=500
+        )
 
     assistant_msg = ChatMessage(user_id=user_id, role="assistant", content=answer)
     db.add(assistant_msg)
@@ -1382,9 +1394,16 @@ def generate_meal_plan_30_days(request: Request, db: Session = Depends(get_db)):
                 status_code=400
             )
 
+        user_prompt = "📆 Gợi ý thực đơn 30 ngày"
         answer = get_meal_plan_30_days(info["goal"], info["target_calories"])
 
+        user_msg = save_chat_message(db, user_id, "user", user_prompt)
+        assistant_msg = save_chat_message(db, user_id, "assistant", answer)
+
         return JSONResponse({
+            "user_message_id": user_msg.id,
+            "user_content": user_prompt,
+            "assistant_message_id": assistant_msg.id,
             "answer": answer,
             "rendered_answer": answer
         })
@@ -1407,6 +1426,8 @@ def ai_meal_plan_1_day(request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return JSONResponse({"error": "Không tìm thấy người dùng"}, status_code=404)
+
+    user_prompt = "📋 Gợi ý thực đơn 1 ngày"
 
     latest_record = (
         db.query(WeightRecord)
@@ -1449,12 +1470,21 @@ Thông tin người dùng:
 
         answer = response.text.strip() if response.text else "Mình chưa thể gợi ý thực đơn lúc này."
 
+        # Lưu user message
+        user_msg = save_chat_message(db, user_id, "user", user_prompt)
+
+        # Lưu assistant message
+        assistant_msg = save_chat_message(db, user_id, "assistant", answer)
+
         rendered_answer = markdown.markdown(
             answer,
             extensions=["extra", "nl2br", "fenced_code"]
         )
 
         return JSONResponse({
+            "user_message_id": user_msg.id,
+            "user_content": user_prompt,
+            "assistant_message_id": assistant_msg.id,
             "answer": answer,
             "rendered_answer": rendered_answer
         })
