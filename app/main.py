@@ -2016,9 +2016,10 @@ async def calculate_health_calculator(
     }
 
     return templates.TemplateResponse(
+        request,
         "health_calculator.html",
         {
-            "request": request,
+        
             "user": user,
             "result": result,
             "form": {
