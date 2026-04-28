@@ -1944,9 +1944,9 @@ def health_calculator_page(request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
 
     return templates.TemplateResponse(
+        request,
         "health_calculator.html",
         {
-            "request": request,
             "user": user,
             "result": None
         }
