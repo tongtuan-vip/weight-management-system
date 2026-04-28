@@ -9,8 +9,6 @@ scikit-learn
 pandas
 numpy
 joblib
-passlib
-bcrypt
 markdown
 python-dotenv
 google-genai

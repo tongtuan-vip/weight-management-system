@@ -605,14 +605,15 @@ def predict_weight(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
-    if len(records) < 2:
+    # Chưa có dữ liệu cân nặng
+    if len(records) == 0:
         return templates.TemplateResponse(
             request,
             "predict.html",
             {
-                
                 "user": user,
-                "message": "Cần ít nhất 2 mốc cân nặng để dự đoán.",
+                "message": "Bạn cần nhập cân nặng ban đầu để hệ thống có thể dự đoán.",
+                "prediction_mode": "empty",
                 "predicted_7": None,
                 "predicted_30": None,
                 "labels": [],
@@ -622,6 +623,69 @@ def predict_weight(request: Request, db: Session = Depends(get_db)):
             }
         )
 
+    current_weight = records[-1].weight
+    target_weight = user.target_weight if user and user.target_weight else current_weight
+
+    labels = [r.record_date.strftime("%d/%m/%Y") for r in records]
+    weights = [r.weight for r in records]
+
+    last_date = records[-1].record_date
+    future_date_7 = last_date + timedelta(days=7)
+    future_date_30 = last_date + timedelta(days=30)
+
+    future_labels = [
+        future_date_7.strftime("%d/%m/%Y"),
+        future_date_30.strftime("%d/%m/%Y")
+    ]
+
+    # Trường hợp người dùng mới chỉ có 1 bản ghi
+    # Dùng dự đoán khởi tạo thay vì bắt chờ thêm dữ liệu
+    if len(records) == 1:
+        if target_weight < current_weight:
+            weekly_change = -0.5
+            goal_text = "Giảm cân"
+        elif target_weight > current_weight:
+            weekly_change = 0.3
+            goal_text = "Tăng cân"
+        else:
+            weekly_change = 0
+            goal_text = "Duy trì cân nặng"
+
+        predicted_7 = current_weight + weekly_change
+        predicted_30 = current_weight + weekly_change * 4
+
+        # Không cho dự đoán vượt quá mục tiêu quá nhiều
+        if goal_text == "Giảm cân":
+            predicted_7 = max(predicted_7, target_weight)
+            predicted_30 = max(predicted_30, target_weight)
+        elif goal_text == "Tăng cân":
+            predicted_7 = min(predicted_7, target_weight)
+            predicted_30 = min(predicted_30, target_weight)
+
+        predicted_7 = round(float(predicted_7), 2)
+        predicted_30 = round(float(predicted_30), 2)
+
+        future_weights = [predicted_7, predicted_30]
+
+        return templates.TemplateResponse(
+            request,
+            "predict.html",
+            {
+                "user": user,
+                "message": "Dữ liệu hiện tại còn ít. Hệ thống đang sử dụng dự đoán khởi tạo cho người dùng mới.",
+                "prediction_mode": "cold_start",
+                "goal_text": goal_text,
+                "current_weight": current_weight,
+                "predicted_7": predicted_7,
+                "predicted_30": predicted_30,
+                "labels": labels,
+                "weights": weights,
+                "future_labels": future_labels,
+                "future_weights": future_weights
+            }
+        )
+
+    # Từ 2 bản ghi trở lên: dùng Linear Regression
     start_date = records[0].record_date
     X = np.array([(r.record_date - start_date).days for r in records]).reshape(-1, 1)
     y = np.array([r.weight for r in records])
@@ -629,7 +693,6 @@ def predict_weight(request: Request, db: Session = Depends(get_db)):
     model = LinearRegression()
     model.fit(X, y)
 
-    last_date = records[-1].record_date
     last_day_number = (last_date - start_date).days
 
     predict_day_7 = last_day_number + 7
@@ -638,45 +701,45 @@ def predict_weight(request: Request, db: Session = Depends(get_db)):
     predicted_7 = float(model.predict([[predict_day_7]])[0])
     predicted_30 = float(model.predict([[predict_day_30]])[0])
 
-    current_weight = records[-1].weight
+    # Giới hạn dự đoán tránh giảm/tăng quá phi thực tế
+    if predicted_7 < current_weight:
+        predicted_7 = max(predicted_7, current_weight - 1)
+    else:
+        predicted_7 = min(predicted_7, current_weight + 1)
 
-    max_loss_7 = current_weight - 1
-    max_loss_30 = current_weight - 4
+    if predicted_30 < current_weight:
+        predicted_30 = max(predicted_30, current_weight - 4)
+    else:
+        predicted_30 = min(predicted_30, current_weight + 4)
 
-    predicted_7 = max(predicted_7, max_loss_7)
-    predicted_30 = max(predicted_30, max_loss_30)
+    predicted_7 = round(float(predicted_7), 2)
+    predicted_30 = round(float(predicted_30), 2)
 
-    labels = [r.record_date.strftime("%d/%m/%Y") for r in records]
-    weights = [r.weight for r in records]
+    future_weights = [predicted_7, predicted_30]
 
-    future_date_7 = last_date + timedelta(days=7)
-    future_date_30 = last_date + timedelta(days=30)
-
-    future_labels = [
-        future_date_7.strftime("%d/%m/%Y"),
-        future_date_30.strftime("%d/%m/%Y")
-    ]
-    future_weights = [
-        round(float(predicted_7), 2),
-        round(float(predicted_30), 2)
-    ]
+    if len(records) < 7:
+        message = "Dữ liệu hiện tại còn ít, kết quả dự đoán chỉ mang tính tham khảo. Hệ thống sẽ chính xác hơn khi có từ 7 bản ghi cân nặng trở lên."
+        prediction_mode = "limited_data"
+    else:
+        message = ""
+        prediction_mode = "official"
 
     return templates.TemplateResponse(
         request,
         "predict.html",
         {
-           
             "user": user,
-            "message": "",
-            "predicted_7": round(float(predicted_7), 2),
-            "predicted_30": round(float(predicted_30), 2),
+            "message": message,
+            "prediction_mode": prediction_mode,
+            "current_weight": current_weight,
+            "predicted_7": predicted_7,
+            "predicted_30": predicted_30,
             "labels": labels,
             "weights": weights,
             "future_labels": future_labels,
             "future_weights": future_weights
         }
     )
-
 
 @app.get("/health")
 def health_analysis(request: Request, db: Session = Depends(get_db)):
@@ -1872,3 +1935,99 @@ Thông tin người dùng:
 
     except Exception as e:
         return JSONResponse({"error": f"Lỗi Gemini: {str(e)}"}, status_code=500)
+@app.get("/health-calculator")
+def health_calculator_page(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=302)
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    return templates.TemplateResponse(
+        "health_calculator.html",
+        {
+            "request": request,
+            "user": user,
+            "result": None
+        }
+    )
+
+
+@app.post("/health-calculator")
+async def calculate_health_calculator(
+    request: Request,
+    age: int = Form(...),
+    gender: str = Form(...),
+    height: float = Form(...),
+    weight: float = Form(...),
+    activity_level: str = Form(...),
+    goal: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=302)
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    height_m = height / 100
+    bmi = round(weight / (height_m ** 2), 2)
+
+    if bmi < 18.5:
+        bmi_status = "Thiếu cân"
+    elif bmi < 25:
+        bmi_status = "Bình thường"
+    elif bmi < 30:
+        bmi_status = "Thừa cân"
+    else:
+        bmi_status = "Béo phì"
+
+    if gender == "male":
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5
+    else:
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161
+
+    activity_factors = {
+        "low": 1.2,
+        "light": 1.375,
+        "moderate": 1.55,
+        "high": 1.725
+    }
+
+    tdee = round(bmr * activity_factors.get(activity_level, 1.2))
+
+    if goal == "lose":
+        target_calories = tdee - 500
+        goal_text = "Giảm cân"
+    elif goal == "gain":
+        target_calories = tdee + 300
+        goal_text = "Tăng cân"
+    else:
+        target_calories = tdee
+        goal_text = "Duy trì cân nặng"
+
+    result = {
+        "bmi": bmi,
+        "bmi_status": bmi_status,
+        "bmr": round(bmr),
+        "tdee": tdee,
+        "target_calories": max(round(target_calories), 1200),
+        "goal_text": goal_text
+    }
+
+    return templates.TemplateResponse(
+        "health_calculator.html",
+        {
+            "request": request,
+            "user": user,
+            "result": result,
+            "form": {
+                "age": age,
+                "gender": gender,
+                "height": height,
+                "weight": weight,
+                "activity_level": activity_level,
+                "goal": goal
+            }
+        }
+    )
