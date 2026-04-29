@@ -3,125 +3,160 @@
 {% block title %}Máy tính sức khỏe{% endblock %}
 
 {% block content %}
-<div class="row g-4">
-    <div class="col-lg-5">
-        <div class="card shadow-sm border-0 rounded-4">
-            <div class="card-body p-4">
-                <h3 class="fw-bold mb-2">Máy tính sức khỏe</h3>
-                <p class="text-muted mb-4">
-                    Tính nhanh các chỉ số BMI, BMR, TDEE và lượng calo mục tiêu hằng ngày.
-                </p>
-
-                <form method="post" action="/health-calculator">
-                    <div class="mb-3">
-                        <label class="form-label">Tuổi</label>
-                        <input type="number" name="age" class="form-control" min="10" max="100"
-                               value="{{ form.age if form else '' }}" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Giới tính</label>
-                        <select name="gender" class="form-select" required>
-                            <option value="male" {% if form and form.gender == 'male' %}selected{% endif %}>Nam</option>
-                            <option value="female" {% if form and form.gender == 'female' %}selected{% endif %}>Nữ</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Chiều cao (cm)</label>
-                        <input type="number" step="0.1" name="height" class="form-control"
-                               value="{{ form.height if form else '' }}" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Cân nặng (kg)</label>
-                        <input type="number" step="0.1" name="weight" class="form-control"
-                               value="{{ form.weight if form else '' }}" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Mức độ vận động</label>
-                        <select name="activity_level" class="form-select" required>
-                            <option value="low" {% if form and form.activity_level == 'low' %}selected{% endif %}>Ít vận động</option>
-                            <option value="light" {% if form and form.activity_level == 'light' %}selected{% endif %}>Vận động nhẹ</option>
-                            <option value="moderate" {% if form and form.activity_level == 'moderate' %}selected{% endif %}>Vận động vừa</option>
-                            <option value="high" {% if form and form.activity_level == 'high' %}selected{% endif %}>Vận động nhiều</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label">Mục tiêu</label>
-                        <select name="goal" class="form-select" required>
-                            <option value="lose" {% if form and form.goal == 'lose' %}selected{% endif %}>Giảm cân</option>
-                            <option value="maintain" {% if form and form.goal == 'maintain' %}selected{% endif %}>Duy trì cân nặng</option>
-                            <option value="gain" {% if form and form.goal == 'gain' %}selected{% endif %}>Tăng cân</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="btn btn-success w-100 rounded-3">
-                        Tính chỉ số
-                    </button>
-                </form>
-            </div>
-        </div>
+<div class="health-calc-page">
+    <div class="p-4 mb-4 rounded-4 shadow-sm text-white"
+         style="background: linear-gradient(135deg, #16a34a, #0ea5e9);">
+        <h2 class="fw-bold mb-2">🧮 Máy tính sức khỏe</h2>
+        <p class="mb-0">
+            Tính BMI, BMR, TDEE và gợi ý lượng calo phù hợp với thể trạng của bạn.
+        </p>
     </div>
 
-    <div class="col-lg-7">
-        {% if result %}
-        <div class="card shadow-sm border-0 rounded-4 mb-4">
-            <div class="card-body p-4">
-                <h3 class="fw-bold mb-3">Kết quả của bạn</h3>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-1">Nhập thông tin</h4>
+                    <p class="text-muted mb-4">Các chỉ số sẽ được tính tự động sau khi bạn bấm nút tính.</p>
 
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-4 bg-light">
-                            <div class="text-muted">BMI</div>
-                            <div class="fs-2 fw-bold">{{ result.bmi }}</div>
-                            <div>{{ result.bmi_status }}</div>
+                    <form method="post" action="/health-calculator">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Tuổi</label>
+                            <input type="number" name="age" class="form-control rounded-3" min="10" max="100"
+                                   value="{{ form.age if form else '' }}" placeholder="Ví dụ: 22" required>
                         </div>
-                    </div>
 
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-4 bg-light">
-                            <div class="text-muted">BMR</div>
-                            <div class="fs-2 fw-bold">{{ result.bmr }}</div>
-                            <div>kcal/ngày</div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Giới tính</label>
+                            <select name="gender" class="form-select rounded-3" required>
+                                <option value="male" {% if form and form.gender == 'male' %}selected{% endif %}>Nam</option>
+                                <option value="female" {% if form and form.gender == 'female' %}selected{% endif %}>Nữ</option>
+                            </select>
                         </div>
-                    </div>
 
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-4 bg-light">
-                            <div class="text-muted">TDEE</div>
-                            <div class="fs-2 fw-bold">{{ result.tdee }}</div>
-                            <div>kcal/ngày</div>
-                        </div>
-                    </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Chiều cao (cm)</label>
+                                <input type="number" step="0.1" name="height" class="form-control rounded-3"
+                                       value="{{ form.height if form else '' }}" placeholder="170" required>
+                            </div>
 
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-4 bg-light">
-                            <div class="text-muted">Calo mục tiêu</div>
-                            <div class="fs-2 fw-bold">{{ result.target_calories }}</div>
-                            <div>{{ result.goal_text }}</div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Cân nặng (kg)</label>
+                                <input type="number" step="0.1" name="weight" class="form-control rounded-3"
+                                       value="{{ form.weight if form else '' }}" placeholder="60" required>
+                            </div>
                         </div>
-                    </div>
+
+                        <div class="mb-3 mt-3">
+                            <label class="form-label fw-semibold">Mức độ vận động</label>
+                            <select name="activity_level" class="form-select rounded-3" required>
+                                <option value="low" {% if form and form.activity_level == 'low' %}selected{% endif %}>Ít vận động</option>
+                                <option value="light" {% if form and form.activity_level == 'light' %}selected{% endif %}>Vận động nhẹ</option>
+                                <option value="moderate" {% if form and form.activity_level == 'moderate' %}selected{% endif %}>Vận động vừa</option>
+                                <option value="high" {% if form and form.activity_level == 'high' %}selected{% endif %}>Vận động nhiều</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Mục tiêu mong muốn</label>
+                            <select name="goal" class="form-select rounded-3" required>
+                                <option value="lose" {% if form and form.goal == 'lose' %}selected{% endif %}>Giảm cân</option>
+                                <option value="maintain" {% if form and form.goal == 'maintain' %}selected{% endif %}>Duy trì cân nặng</option>
+                                <option value="gain" {% if form and form.goal == 'gain' %}selected{% endif %}>Tăng cân</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 rounded-4 py-2 fw-bold">
+                            Tính chỉ số sức khỏe
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
 
-        <div class="alert alert-success rounded-4">
-            Với mục tiêu <strong>{{ result.goal_text }}</strong>, bạn nên duy trì khoảng
-            <strong>{{ result.target_calories }} kcal/ngày</strong>. Chỉ số này mang tính tham khảo và có thể điều chỉnh theo tình trạng sức khỏe thực tế.
+        <div class="col-lg-7">
+            {% if result %}
+                {% if result.warning %}
+                <div class="alert alert-warning rounded-4 border-0 shadow-sm">
+                    <strong>⚠️ Lưu ý:</strong> {{ result.warning }}
+                </div>
+                {% endif %}
+
+                <div class="card shadow-sm border-0 rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h4 class="fw-bold mb-1">Kết quả phân tích</h4>
+                                <p class="text-muted mb-0">Dựa trên thông tin bạn vừa nhập.</p>
+                            </div>
+                            <span class="badge rounded-pill text-bg-success px-3 py-2">
+                                {{ result.bmi_status }}
+                            </span>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-4 rounded-4 bg-light h-100">
+                                    <div class="text-muted small">BMI</div>
+                                    <div class="fs-1 fw-bold">{{ result.bmi }}</div>
+                                    <div class="fw-semibold">{{ result.bmi_status }}</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="p-4 rounded-4 bg-light h-100">
+                                    <div class="text-muted small">BMR</div>
+                                    <div class="fs-1 fw-bold">{{ result.bmr }}</div>
+                                    <div class="fw-semibold">kcal/ngày</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="p-4 rounded-4 bg-light h-100">
+                                    <div class="text-muted small">TDEE</div>
+                                    <div class="fs-1 fw-bold">{{ result.tdee }}</div>
+                                    <div class="fw-semibold">kcal/ngày</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="p-4 rounded-4 bg-light h-100">
+                                    <div class="text-muted small">Calo khuyến nghị</div>
+                                    <div class="fs-1 fw-bold">{{ result.target_calories }}</div>
+                                    <div class="fw-semibold">{{ result.final_goal_text }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">Gợi ý dành cho bạn</h5>
+                        <p class="mb-2">
+                            Mục tiêu phù hợp hiện tại:
+                            <strong>{{ result.final_goal_text }}</strong>
+                        </p>
+                        <p class="mb-0">
+                            Bạn nên duy trì khoảng
+                            <strong>{{ result.target_calories }} kcal/ngày</strong>.
+                            Chỉ số này mang tính tham khảo và nên điều chỉnh theo sức khỏe thực tế.
+                        </p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-body p-5 d-flex flex-column justify-content-center text-center">
+                        <div class="fs-1 mb-3">💚</div>
+                        <h3 class="fw-bold">Sẵn sàng phân tích sức khỏe</h3>
+                        <p class="text-muted mb-0">
+                            Nhập thông tin bên trái để hệ thống tính BMI, BMR, TDEE và đưa ra lượng calo phù hợp.
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
         </div>
-        {% else %}
-        <div class="card shadow-sm border-0 rounded-4 h-100">
-            <div class="card-body p-4 d-flex flex-column justify-content-center">
-                <h3 class="fw-bold">Nhập thông tin để bắt đầu</h3>
-                <p class="text-muted">
-                    Hệ thống sẽ tính BMI để đánh giá thể trạng, BMR để ước tính năng lượng cơ bản và TDEE để xác định nhu cầu calo hằng ngày.
-                </p>
-            </div>
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

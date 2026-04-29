@@ -1970,23 +1970,51 @@ async def calculate_health_calculator(
 
     user = db.query(User).filter(User.id == user_id).first()
 
+    # Tính BMI
     height_m = height / 100
     bmi = round(weight / (height_m ** 2), 2)
 
+    # Phân loại BMI và xử lý mục tiêu không phù hợp
+    warning = None
+    final_goal = goal
+
     if bmi < 18.5:
         bmi_status = "Thiếu cân"
+        if goal == "lose":
+            final_goal = "gain"
+            warning = (
+                "Chỉ số BMI của bạn đang ở mức thiếu cân, vì vậy hệ thống không khuyến nghị giảm cân. "
+                "Mục tiêu đã được điều chỉnh sang tăng cân lành mạnh."
+            )
+
     elif bmi < 25:
         bmi_status = "Bình thường"
+
     elif bmi < 30:
         bmi_status = "Thừa cân"
+        if goal == "gain":
+            final_goal = "lose"
+            warning = (
+                "Chỉ số BMI của bạn đang ở mức thừa cân, vì vậy hệ thống không khuyến nghị tăng cân. "
+                "Mục tiêu đã được điều chỉnh sang giảm cân lành mạnh."
+            )
+
     else:
         bmi_status = "Béo phì"
+        if goal == "gain":
+            final_goal = "lose"
+            warning = (
+                "Chỉ số BMI của bạn đang ở mức béo phì, vì vậy hệ thống không khuyến nghị tăng cân. "
+                "Mục tiêu đã được điều chỉnh sang giảm cân lành mạnh."
+            )
 
+    # Tính BMR
     if gender == "male":
         bmr = 10 * weight + 6.25 * height - 5 * age + 5
     else:
         bmr = 10 * weight + 6.25 * height - 5 * age - 161
 
+    # Tính TDEE
     activity_factors = {
         "low": 1.2,
         "light": 1.375,
@@ -1996,15 +2024,16 @@ async def calculate_health_calculator(
 
     tdee = round(bmr * activity_factors.get(activity_level, 1.2))
 
-    if goal == "lose":
+    # Tính calo mục tiêu theo mục tiêu cuối cùng
+    if final_goal == "lose":
         target_calories = tdee - 500
-        goal_text = "Giảm cân"
-    elif goal == "gain":
+        final_goal_text = "Giảm cân lành mạnh"
+    elif final_goal == "gain":
         target_calories = tdee + 300
-        goal_text = "Tăng cân"
+        final_goal_text = "Tăng cân lành mạnh"
     else:
         target_calories = tdee
-        goal_text = "Duy trì cân nặng"
+        final_goal_text = "Duy trì cân nặng"
 
     result = {
         "bmi": bmi,
@@ -2012,14 +2041,16 @@ async def calculate_health_calculator(
         "bmr": round(bmr),
         "tdee": tdee,
         "target_calories": max(round(target_calories), 1200),
-        "goal_text": goal_text
+        "goal_text": goal,
+        "final_goal": final_goal,
+        "final_goal_text": final_goal_text,
+        "warning": warning
     }
 
     return templates.TemplateResponse(
         request,
         "health_calculator.html",
         {
-        
             "user": user,
             "result": result,
             "form": {
