@@ -147,7 +147,14 @@
             <div class="card section-card mb-3">
                 <div class="card-body">
                     <div class="section-title">Biểu mẫu thông tin</div>
-
+<div class="alert alert-warning rounded-4 shadow-sm">
+    <strong>⚠️ Có lỗi xảy ra:</strong>
+    <ul class="mb-0 mt-2">
+        {% for error in errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+</div>
                     <form action="/profile" method="post">
                         <div class="row g-3">
                             <div class="col-md-6">

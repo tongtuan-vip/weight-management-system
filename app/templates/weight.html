@@ -125,6 +125,11 @@
             <div class="card section-card h-100">
                 <div class="card-body">
                     <div class="section-title">Nhập cân nặng mới</div>
+                    {% if error %}
+<div class="alert alert-warning rounded-4 shadow-sm">
+    ⚠️ {{ error }}
+</div>
+{% endif %}
 
                     <form action="/weight" method="post">
                         <div class="mb-3">

@@ -300,7 +300,6 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
 
 
 @app.post("/profile")
-
 def save_profile(
     request: Request,
     age: int = Form(...),
@@ -324,11 +323,54 @@ def save_profile(
     latest_record = get_latest_weight_record(db, user_id)
     allow_current_weight_input = latest_record is None
 
+    errors = []
+
+    if age < 10 or age > 100:
+        errors.append("Tuổi không hợp lệ. Vui lòng nhập tuổi trong khoảng 10 đến 100.")
+
+    if height < 120:
+        errors.append("Chiều cao bạn nhập khá thấp so với ngưỡng thông thường. Vui lòng kiểm tra lại đơn vị là cm.")
+    elif height > 220:
+        errors.append("Chiều cao bạn nhập khá cao so với ngưỡng thông thường của người Việt Nam. Vui lòng kiểm tra lại dữ liệu.")
+
+    if target_weight < 25:
+        errors.append("Cân nặng mục tiêu quá thấp, có thể không an toàn cho sức khỏe. Vui lòng đặt mục tiêu hợp lý hơn.")
+    elif target_weight > 200:
+        errors.append("Cân nặng mục tiêu quá cao so với ngưỡng thông thường. Vui lòng kiểm tra lại dữ liệu.")
+
+    if allow_current_weight_input:
+        if current_weight is None:
+            errors.append("Vui lòng nhập cân nặng hiện tại để khởi tạo hồ sơ.")
+        elif current_weight < 25:
+            errors.append("Cân nặng hiện tại quá thấp so với ngưỡng thông thường. Vui lòng kiểm tra lại đơn vị là kg.")
+        elif current_weight > 200:
+            errors.append("Cân nặng hiện tại quá cao so với ngưỡng thông thường. Vui lòng kiểm tra lại dữ liệu.")
+
+    if errors:
+        return templates.TemplateResponse(
+            request,
+            "profile.html",
+            {
+                "user": user,
+                "errors": errors,
+                "allow_current_weight_input": allow_current_weight_input,
+                "form": {
+                    "age": age,
+                    "gender": gender,
+                    "height": height,
+                    "target_weight": target_weight,
+                    "activity_level": activity_level,
+                    "current_weight": current_weight
+                }
+            }
+        )
+
     user.age = age
     user.gender = gender
     user.height = height
     user.target_weight = target_weight
     user.activity_level = activity_level
+    user.is_profile_completed = True
 
     db.commit()
 
@@ -342,10 +384,7 @@ def save_profile(
         )
         db.add(new_record)
         db.commit()
-    user.is_profile_completed = True
-    db.commit()
 
-    # load lại để render đúng trạng thái sau khi lưu
     latest_record = get_latest_weight_record(db, user_id)
     allow_current_weight_input = latest_record is None
 
@@ -353,13 +392,11 @@ def save_profile(
         request,
         "profile.html",
         {
-            
             "user": user,
             "message": "Lưu thông tin thành công!",
             "allow_current_weight_input": allow_current_weight_input
         }
     )
-
 
 @app.get("/dashboard")
 def dashboard(request: Request, db: Session = Depends(get_db)):
@@ -414,6 +451,20 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         today = date.today()
         has_today_record = any(r.record_date == today for r in records)
 
+    goal = "Chưa xác định"
+    goal_direction = None
+
+    if user and user.target_weight and latest_weight:
+        if user.target_weight < latest_weight:
+            goal = "Giảm cân"
+            goal_direction = "lose"
+        elif user.target_weight > latest_weight:
+            goal = "Tăng cân"
+            goal_direction = "gain"
+        else:
+            goal = "Duy trì"
+            goal_direction = "maintain"
+
     if len(records) >= 2:
         start_date = records[0].record_date
         X = np.array([(r.record_date - start_date).days for r in records]).reshape(-1, 1)
@@ -424,36 +475,65 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
         last_date = records[-1].record_date
         last_day_number = (last_date - start_date).days
+        current_weight = records[-1].weight
 
         predict_day_7 = last_day_number + 7
         predict_day_30 = last_day_number + 30
 
-        predicted_7 = float(model.predict([[predict_day_7]])[0])
-        predicted_30 = float(model.predict([[predict_day_30]])[0])
+        raw_predicted_7 = float(model.predict([[predict_day_7]])[0])
+        raw_predicted_30 = float(model.predict([[predict_day_30]])[0])
 
-        current_weight = records[-1].weight
-        max_loss_7 = current_weight - 1
-        max_loss_30 = current_weight - 4
-
-        predicted_7 = round(max(predicted_7, max_loss_7), 2)
-        predicted_30 = round(max(predicted_30, max_loss_30), 2)
-
-        target_date_prediction = predict_target_date(records, user.target_weight if user else None)
-
-    goal = "Chưa xác định"
-    if user and user.target_weight and latest_weight:
-        if user.target_weight < latest_weight:
-            goal = "Giảm cân"
-        elif user.target_weight > latest_weight:
-            goal = "Tăng cân"
+        if raw_predicted_7 < current_weight:
+            predicted_7 = max(raw_predicted_7, current_weight - 1)
         else:
-            goal = "Duy trì"
+            predicted_7 = min(raw_predicted_7, current_weight + 1)
+
+        if raw_predicted_30 < current_weight:
+            predicted_30 = max(raw_predicted_30, current_weight - 4)
+        else:
+            predicted_30 = min(raw_predicted_30, current_weight + 4)
+
+        predicted_7 = round(float(predicted_7), 2)
+        predicted_30 = round(float(predicted_30), 2)
+
+        # Ước tính ngày đạt mục tiêu dựa trên model thật
+        if user and user.target_weight and goal_direction in ["lose", "gain"]:
+            target_weight = user.target_weight
+            estimated_date = None
+
+            # Duyệt tối đa 365 ngày trong tương lai
+            for i in range(1, 366):
+                future_day = last_day_number + i
+                future_weight = float(model.predict([[future_day]])[0])
+
+                if goal_direction == "lose" and future_weight <= target_weight:
+                    estimated_date = last_date + timedelta(days=i)
+                    break
+
+                if goal_direction == "gain" and future_weight >= target_weight:
+                    estimated_date = last_date + timedelta(days=i)
+                    break
+
+            if estimated_date:
+                target_date_prediction = estimated_date.strftime("%d/%m/%Y")
+            else:
+                target_date_prediction = "Chưa xác định"
+
+        elif goal_direction == "maintain":
+            target_date_prediction = "Đã đạt mục tiêu"
+
+    elif len(records) == 1:
+        # Người dùng mới chỉ có 1 bản ghi: chưa đủ xu hướng để tính ngày đạt mục tiêu chính xác
+        if user and user.target_weight and latest_weight:
+            if user.target_weight == latest_weight:
+                target_date_prediction = "Đã đạt mục tiêu"
+            else:
+                target_date_prediction = "Chưa đủ dữ liệu"
 
     streak = calculate_weight_streak(records)
 
     progress_percent = 0
     remaining_weight = None
-    goal_direction = None
 
     if records and user and user.target_weight:
         first_weight = records[0].weight
@@ -559,9 +639,83 @@ def save_weight(
     if not user_id:
         return RedirectResponse(url="/login", status_code=302)
 
+    user = db.query(User).filter(User.id == user_id).first()
+
+    try:
+        input_date = date.fromisoformat(record_date)
+    except ValueError:
+        input_date = None
+
+    records = (
+        db.query(WeightRecord)
+        .filter(WeightRecord.user_id == user_id)
+        .order_by(WeightRecord.record_date.asc(), WeightRecord.id.asc())
+        .all()
+    )
+
+    error = None
+
+    if input_date is None:
+        error = "Ngày nhập cân nặng không hợp lệ."
+
+    elif input_date > date.today():
+        error = "Bạn không thể nhập cân nặng cho ngày trong tương lai."
+
+    elif weight < 25:
+        error = "Cân nặng quá thấp so với ngưỡng thông thường. Vui lòng kiểm tra lại đơn vị là kg."
+
+    elif weight > 200:
+        error = "Cân nặng quá cao so với ngưỡng thông thường. Vui lòng kiểm tra lại dữ liệu."
+
+    else:
+        existing_record = (
+            db.query(WeightRecord)
+            .filter(
+                WeightRecord.user_id == user_id,
+                WeightRecord.record_date == input_date
+            )
+            .first()
+        )
+
+        if existing_record:
+            error = "Ngày này đã có dữ liệu cân nặng. Vui lòng chọn ngày khác hoặc chỉnh sửa bản ghi cũ."
+
+    if not error and records:
+        latest_record = records[-1]
+
+        days_diff = abs((input_date - latest_record.record_date).days)
+        days_diff = max(days_diff, 1)
+
+        weight_diff = abs(weight - latest_record.weight)
+
+        max_allowed_diff = days_diff * 1.0
+
+        if weight_diff > max_allowed_diff:
+            error = (
+                f"Cân nặng thay đổi {weight_diff:.1f} kg trong {days_diff} ngày. "
+                f"Mức thay đổi hợp lý tối đa khoảng {max_allowed_diff:.1f} kg. "
+                "Vui lòng kiểm tra lại dữ liệu."
+            )
+
+    if error:
+        return templates.TemplateResponse(
+            request,
+            "weight.html",
+            {
+                "user": user,
+                "records": records,
+                "error": error,
+                "form": {
+                    "record_date": record_date,
+                    "weight": weight,
+                    "note": note
+                }
+            }
+        )
+
     new_record = WeightRecord(
         user_id=user_id,
-        record_date=date.fromisoformat(record_date),
+        record_date=input_date,
         weight=weight,
         note=note
     )
@@ -569,7 +723,6 @@ def save_weight(
     db.add(new_record)
     db.commit()
 
-    user = db.query(User).filter(User.id == user_id).first()
     records = (
         db.query(WeightRecord)
         .filter(WeightRecord.user_id == user_id)
@@ -581,14 +734,11 @@ def save_weight(
         request,
         "weight.html",
         {
-            
             "user": user,
             "records": records,
             "message": "Lưu cân nặng thành công!"
         }
     )
-
-
 @app.get("/predict")
 def predict_weight(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
