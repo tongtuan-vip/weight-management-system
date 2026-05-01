@@ -368,11 +368,11 @@
 <span class="hero-chip">🔥 Streak: {{ streak }} ngày</span>
 <span class="hero-chip">
     📅 Ngày ước tính đạt mục tiêu:
-    {% if target_date_prediction %}
-        {{ target_date_prediction.strftime('%d/%m/%Y') }}
-    {% else %}
-        Chưa đủ dữ liệu
-    {% endif %}
+   {% if target_date_prediction %}
+    {{ target_date_prediction }}
+{% else %}
+    Chưa xác định
+{% endif %}
 </span>
                 </div>
             </div>
