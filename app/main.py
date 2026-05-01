@@ -393,7 +393,6 @@ def save_profile(
         "profile.html",
         {
             "user": user,
-             "errors": [],
             "message": "Lưu thông tin thành công!",
             "allow_current_weight_input": allow_current_weight_input
         }

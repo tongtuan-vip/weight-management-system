@@ -716,10 +716,10 @@
                     <div class="summary-title">Ngày ước tính</div>
                     <div class="summary-value">
                         {% if target_date_prediction %}
-                            {{ target_date_prediction.strftime('%d/%m/%Y') }}
-                        {% else %}
-                            Chưa đủ dữ liệu
-                        {% endif %}
+    {{ target_date_prediction }}
+{% else %}
+    Chưa xác định
+{% endif %}
                     </div>
                 </div>
 
