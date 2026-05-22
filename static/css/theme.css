@@ -1046,3 +1046,182 @@ body {
         flex-shrink: 0;
     }
 }
+/* ===== MOBILE APP LAYOUT FIX ===== */
+
+/* Mặc định trên desktop thì ẩn menu mobile */
+.mobile-bottom-nav {
+    display: none;
+}
+
+/* Chỉ áp dụng cho màn hình mobile / WebView APK */
+@media (max-width: 768px) {
+
+    /* Khung app chuyển về 1 cột */
+    .app-shell {
+        display: block !important;
+        width: 100% !important;
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow-x: hidden;
+    }
+
+    /* Ẩn left menu/sidebar trên mobile */
+    .sidebar {
+        display: none !important;
+    }
+
+    /* Nội dung chiếm toàn bộ màn hình */
+    .page-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 14px 12px 86px 12px !important;
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow-y: visible !important;
+    }
+
+    .page-wrap,
+    .main-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding-bottom: 72px;
+    }
+
+    /* Header mobile gọn hơn */
+    .page-header {
+        border-radius: 18px;
+        padding: 18px 18px;
+        margin-bottom: 16px;
+    }
+
+    .page-header h1 {
+        font-size: 24px;
+        line-height: 1.25;
+    }
+
+    .page-header p {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    /* Card/form full width */
+    .section-card,
+    .card {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 18px;
+        margin-bottom: 16px;
+        overflow: visible !important;
+    }
+
+    .section-card .card-body,
+    .card-body {
+        padding: 16px;
+    }
+
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    [class*="col-"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-bottom: 12px;
+    }
+
+    .form-control,
+    .form-select {
+        min-height: 48px;
+        font-size: 15px;
+    }
+
+    .btn,
+    button {
+        min-height: 46px;
+        font-size: 15px;
+    }
+
+    /* Bảng dài thì cho cuộn ngang */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Thanh menu dưới cùng */
+    .mobile-bottom-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 66px;
+        background: #ffffff;
+        border-top: 1px solid #e9ecef;
+        display: flex !important;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 99999;
+        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.10);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .mobile-nav-item {
+        flex: 1;
+        height: 100%;
+        text-decoration: none !important;
+        color: #198754 !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        font-weight: 700;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-nav-item:hover,
+    .mobile-nav-item:focus,
+    .mobile-nav-item:active {
+        text-decoration: none !important;
+        color: #0f7a45 !important;
+        background: rgba(25, 135, 84, 0.08);
+    }
+
+    .mobile-nav-icon {
+        font-size: 21px;
+        line-height: 1;
+    }
+
+    .mobile-nav-text {
+        font-size: 11px;
+        line-height: 1.1;
+        white-space: nowrap;
+    }
+
+    /* Footer tránh bị menu dưới che */
+    .app-footer {
+        margin-bottom: 76px;
+    }
+}
+
+/* Dark mode cho menu mobile */
+@media (max-width: 768px) {
+    html[data-theme="dark"] .mobile-bottom-nav {
+        background: #1f2937;
+        border-top-color: #334155;
+        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    html[data-theme="dark"] .mobile-nav-item {
+        color: #20c997 !important;
+    }
+
+    html[data-theme="dark"] .mobile-nav-item:hover,
+    html[data-theme="dark"] .mobile-nav-item:focus,
+    html[data-theme="dark"] .mobile-nav-item:active {
+        background: rgba(32, 201, 151, 0.12);
+        color: #34d399 !important;
+    }
+}
