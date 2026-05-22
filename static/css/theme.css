@@ -40,12 +40,20 @@ html[data-theme="dark"] {
     --table-head-bg: #243041;
 }
 
+html,
+body {
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
 body {
     background: var(--bg-main);
     font-family: Arial, sans-serif;
     margin: 0;
     font-size: 14px;
     color: var(--text-main);
+    -webkit-overflow-scrolling: touch;
 }
 
 /* SIDEBAR */
@@ -142,8 +150,6 @@ body {
     margin-bottom: 18px;
     background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08));
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
-}
-.user-box {
     text-decoration: none !important;
 }
 
@@ -161,10 +167,8 @@ body {
     gap: 14px;
     padding: 16px;
     border-radius: 20px;
-
     text-decoration: none !important;
     color: #fff !important;
-
     background: rgba(255,255,255,0.10);
     transition: all 0.22s ease;
 }
@@ -305,42 +309,6 @@ body {
     margin: 0;
 }
 
-@media (max-width: 992px) {
-    .sidebar {
-        width: 260px;
-    }
-}
-
-@media (max-width: 768px) {
-    .sidebar {
-        width: 92px;
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-
-    .sidebar .sidebar-text,
-    .sidebar .brand-text {
-        display: none;
-    }
-
-    .brand-wrap {
-        justify-content: center;
-    }
-
-    .top-actions {
-        justify-content: center;
-    }
-
-    .user-box {
-        justify-content: center;
-        padding: 14px 10px;
-    }
-
-    .menu-item {
-        justify-content: center;
-        padding: 14px 10px;
-    }
-}
 /* PAGE */
 .page-content {
     flex: 1;
@@ -375,7 +343,6 @@ body {
     opacity: 0.95;
 }
 
-/* Header variants */
 .header-green {
     background: linear-gradient(135deg, #198754, #20c997);
 }
@@ -509,6 +476,7 @@ body {
     background: var(--bg-soft);
     border: 1px solid var(--border-color);
     padding: 14px;
+    color: var(--text-main);
 }
 
 .summary-box {
@@ -579,6 +547,7 @@ body {
 
 .chart-box {
     height: 240px;
+    min-height: 300px;
 }
 
 .chart-box canvas {
@@ -616,24 +585,18 @@ model-viewer {
     border-radius: 8px;
 }
 
-.text-good {
+.text-good,
+.trend-good {
     color: #198754;
 }
 
-.text-bad {
+.text-bad,
+.trend-bad {
     color: #dc3545;
 }
 
 .text-neutral {
     color: var(--text-main);
-}
-
-.trend-good {
-    color: #198754;
-}
-
-.trend-bad {
-    color: #dc3545;
 }
 
 .trend-neutral {
@@ -713,22 +676,152 @@ model-viewer {
     line-height: 1.5;
 }
 
+.alert {
+    border-radius: 12px;
+}
+
 .alert-secondary {
     background: var(--bg-soft);
     color: var(--text-main);
     border-color: var(--border-color);
 }
 
-.alert-info {
+.alert-info,
+.alert-warning,
+.alert-success,
+.alert-secondary {
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+.badge {
+    font-weight: 600;
+}
+
+/* FORM + TEXT FIX */
+label,
+.form-label,
+.form-check-label,
+.col-form-label {
+    color: var(--text-main) !important;
+}
+
+.form-text,
+.text-muted,
+.form-note,
+.hint-box,
+.compact-note {
+    color: var(--text-muted) !important;
+}
+
+.form-control,
+.form-select,
+input,
+select,
+textarea {
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+.form-control::placeholder,
+textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.form-select option {
+    background: var(--bg-card);
     color: var(--text-main);
 }
 
-.alert-warning {
+.form-control:focus,
+.form-select:focus,
+textarea:focus {
+    background: var(--input-bg);
     color: var(--text-main);
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.15);
 }
 
-.alert-success {
+/* DARK MODE */
+html[data-theme="dark"] form label,
+html[data-theme="dark"] .form-label,
+html[data-theme="dark"] .form-check-label,
+html[data-theme="dark"] .col-form-label {
+    color: #e5e7eb !important;
+}
+
+html[data-theme="dark"] .info-label,
+html[data-theme="dark"] .summary-title,
+html[data-theme="dark"] .metric-label,
+html[data-theme="dark"] .stat-label {
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .alert-info {
+    background: rgba(13, 202, 240, 0.18) !important;
+    color: #e5e7eb !important;
+    border-color: rgba(13, 202, 240, 0.25) !important;
+}
+
+html[data-theme="dark"] .alert-warning {
+    background: rgba(255, 193, 7, 0.18) !important;
+    color: #e5e7eb !important;
+    border-color: rgba(255, 193, 7, 0.25) !important;
+}
+
+html[data-theme="dark"] .alert-success {
+    background: rgba(25, 135, 84, 0.18) !important;
+    color: #e5e7eb !important;
+    border-color: rgba(25, 135, 84, 0.25) !important;
+}
+
+html[data-theme="dark"] .alert-secondary {
+    background: var(--bg-soft) !important;
+    color: #e5e7eb !important;
+    border-color: var(--border-color) !important;
+}
+
+html[data-theme="dark"] .table,
+html[data-theme="dark"] .table tbody td,
+html[data-theme="dark"] .table thead th {
+    color: var(--text-main) !important;
+}
+
+html[data-theme="dark"] .table-hover tbody tr:hover {
     color: var(--text-main);
+    background-color: rgba(255,255,255,0.05);
+}
+
+/* AUTH / LOGIN / REGISTER MOBILE WEBVIEW FIX */
+.auth-page,
+.login-page,
+.register-page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    padding-bottom: 40px;
+}
+
+.auth-page .container,
+.login-page .container,
+.register-page .container {
+    min-height: auto !important;
+    overflow: visible !important;
+    padding-bottom: 40px;
+}
+
+.auth-card,
+.login-card,
+.register-card {
+    overflow: visible;
+}
+
+/* RESPONSIVE */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 260px;
+    }
 }
 
 @media (max-width: 991px) {
@@ -774,6 +867,35 @@ model-viewer {
 }
 
 @media (max-width: 768px) {
+    .sidebar {
+        width: 92px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .sidebar .sidebar-text,
+    .sidebar .brand-text {
+        display: none;
+    }
+
+    .brand-wrap {
+        justify-content: center;
+    }
+
+    .top-actions {
+        justify-content: center;
+    }
+
+    .user-box {
+        justify-content: center;
+        padding: 14px 10px;
+    }
+
+    .menu-item {
+        justify-content: center;
+        padding: 14px 10px;
+    }
+
     .app-footer {
         flex-direction: column;
         align-items: flex-start;
@@ -783,136 +905,144 @@ model-viewer {
         text-align: left;
     }
 }
-/* ===== FORM + ALERT + TEXT FIX ===== */
 
-/* Label và text trong form */
-label,
-.form-label,
-.form-check-label,
-.col-form-label {
-    color: var(--text-main) !important;
+@media (max-width: 576px) {
+    body {
+        font-size: 14px;
+    }
+
+    .auth-page,
+    .login-page,
+    .register-page {
+        display: block !important;
+        min-height: 100dvh;
+        padding: 16px 12px 56px 12px;
+        overflow-y: auto;
+    }
+
+    .auth-page .container,
+    .login-page .container,
+    .register-page .container {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-bottom: 56px;
+    }
+
+    .auth-card,
+    .login-card,
+    .register-card {
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 40px;
+    }
+
+    .form-control,
+    .form-select {
+        min-height: 48px;
+        font-size: 15px;
+    }
+
+    button,
+    .btn {
+        min-height: 46px;
+    }
+
+    .page-content {
+        padding: 12px;
+        margin-left: 92px;
+    }
+
+    .page-header {
+        padding: 14px 16px;
+    }
+
+    .page-header h1 {
+        font-size: 22px;
+    }
 }
+/* ===== GLOBAL MOBILE / WEBVIEW SCROLL FIX ===== */
 
-.form-text,
-.text-muted,
-.form-note,
-.hint-box,
-.compact-note {
-    color: var(--text-muted) !important;
-}
-
-/* Input / select / textarea */
-.form-control,
-.form-select,
-input,
-select,
-textarea {
-    background: var(--input-bg);
-    color: var(--text-main);
-    border: 1px solid var(--border-color);
-}
-
-.form-control::placeholder,
-textarea::placeholder {
-    color: var(--text-muted);
-}
-
-.form-select option {
-    background: var(--bg-card);
-    color: var(--text-main);
-}
-
-.form-control:focus,
-.form-select:focus,
-textarea:focus {
-    background: var(--input-bg);
-    color: var(--text-main);
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.15);
-}
-
-/* Dark mode: ép label trong form sáng rõ */
-html[data-theme="dark"] form label,
-html[data-theme="dark"] .form-label,
-html[data-theme="dark"] .form-check-label,
-html[data-theme="dark"] .col-form-label {
-    color: #e5e7eb !important;
-}
-
-/* Dark mode: các label mô tả nhỏ giữ màu dịu hơn */
-html[data-theme="dark"] .info-label,
-html[data-theme="dark"] .summary-title,
-html[data-theme="dark"] .metric-label,
-html[data-theme="dark"] .stat-label {
-    color: #cbd5e1 !important;
-}
-
-/* Alert */
-.alert {
-    border-radius: 12px;
-}
-
-.alert-info,
-.alert-warning,
-.alert-success,
-.alert-secondary {
-    color: var(--text-main) !important;
-    border-color: var(--border-color) !important;
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-html[data-theme="dark"] .alert-info {
-    background: rgba(13, 202, 240, 0.18) !important;
-    color: #e5e7eb !important;
-    border-color: rgba(13, 202, 240, 0.25) !important;
+body {
+    position: relative;
 }
 
-html[data-theme="dark"] .alert-warning {
-    background: rgba(255, 193, 7, 0.18) !important;
-    color: #e5e7eb !important;
-    border-color: rgba(255, 193, 7, 0.25) !important;
+/* Toàn bộ khung app phải cho phép cao hơn màn hình */
+.app-shell {
+    min-height: 100vh;
+    min-height: 100dvh;
+    align-items: stretch;
 }
 
-html[data-theme="dark"] .alert-success {
-    background: rgba(25, 135, 84, 0.18) !important;
-    color: #e5e7eb !important;
-    border-color: rgba(25, 135, 84, 0.25) !important;
+/* Nội dung chính phải được phép cuộn */
+.page-content,
+.page-wrap,
+.main-content {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: visible;
 }
 
-html[data-theme="dark"] .alert-secondary {
-    background: var(--bg-soft) !important;
-    color: #e5e7eb !important;
-    border-color: var(--border-color) !important;
+/* Không để card/form/table bị cắt nội dung */
+.section-card,
+.card,
+.card-body,
+.container,
+.row,
+.col,
+[class*="col-"] {
+    overflow: visible;
 }
 
-/* Card con bên trong */
-.profile-info-card,
-.summary-box,
-.insight-box,
-.advice-box,
-.habit-card {
-    color: var(--text-main);
+/* Bảng dài thì cuộn ngang, tránh vỡ layout mobile */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-.badge {
-    font-weight: 600;
-}
-/* FIX bảng trong dark mode */
-html[data-theme="dark"] .table {
-    color: var(--text-main) !important;
-}
+/* Mobile/WebView */
+@media (max-width: 768px) {
+    html,
+    body {
+        overflow-y: auto !important;
+    }
 
-html[data-theme="dark"] .table tbody td {
-    color: var(--text-main) !important;
-}
+    .app-shell {
+        min-height: 100dvh;
+    }
 
-html[data-theme="dark"] .table-hover tbody tr:hover {
-    color: var(--text-main);
-    background-color: rgba(255,255,255,0.05);
-}
+    .page-content {
+        margin-left: 0 !important;
+        padding: 12px;
+        width: 100%;
+        min-height: 100dvh;
+        overflow-y: visible;
+        padding-bottom: 64px;
+    }
 
-html[data-theme="dark"] .table thead th {
-    color: var(--text-main);
-}
-.chart-box {
-    min-height: 300px;
+    .page-wrap {
+        width: 100%;
+        max-width: 100%;
+        padding-bottom: 64px;
+    }
+
+    .section-card,
+    .card {
+        margin-bottom: 16px;
+    }
+
+    .sidebar {
+        position: relative;
+        flex-shrink: 0;
+    }
 }
