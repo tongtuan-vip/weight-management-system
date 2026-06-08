@@ -272,21 +272,21 @@
                                     <th style="width: 90px;">Xóa</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {% for item in records %}
-                                <tr>
-                                    <td>{{ loop.index }}</td>
-                                    <td>{{ item.record_date.strftime('%d/%m/%Y') }}</td>
-                                    <td><strong>{{ item.weight }} kg</strong></td>
-                                    <td>{{ item.note or '—' }}</td>
-                                    <td>
-                                        <form action="/weight/delete/{{ item.id }}" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa bản ghi này?');">
-                                            <button type="submit" class="btn btn-outline-danger delete-btn">Xóa</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
+                        <tbody>
+    {% for item in records|sort(attribute='record_date', reverse=True) %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ item.record_date.strftime('%d/%m/%Y') }}</td>
+        <td><strong>{{ item.weight }} kg</strong></td>
+        <td>{{ item.note or '—' }}</td>
+        <td>
+            <form action="/weight/delete/{{ item.id }}" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa bản ghi này?');">
+                <button type="submit" class="btn btn-outline-danger delete-btn">Xóa</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
                         </table>
                     </div>
 
@@ -314,6 +314,18 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const today = new Date().toISOString().split('T')[0];
+    const input = document.getElementById("recordDate");
+
+    if (input) {
+        input.value = today;
+        input.max = today;
+    }
+});
+</script>
+
 {% if records and records|length > 0 %}
 <script>
     const labels = [
@@ -367,17 +379,6 @@
             }
         }
     });
-    
-document.addEventListener("DOMContentLoaded", function() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById("recordDate").value = today;
-});
-document.addEventListener("DOMContentLoaded", function() {
-    const today = new Date().toISOString().split('T')[0];
-    const input = document.getElementById("recordDate");
-    input.value = today;
-    input.max = today;
-});
 </script>
 {% endif %}
 {% endblock %}
