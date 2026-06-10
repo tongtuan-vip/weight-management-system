@@ -908,7 +908,6 @@ def health_analysis(request: Request, db: Session = Depends(get_db)):
             request,
             "health.html",
             {
-                
                 "user": user,
                 "message": "Vui lòng cập nhật đầy đủ tuổi, giới tính, chiều cao và nhập ít nhất 1 bản ghi cân nặng.",
                 "bmi": None,
@@ -925,9 +924,11 @@ def health_analysis(request: Request, db: Session = Depends(get_db)):
             }
         )
 
+    # Tính BMI
     height_m = user.height / 100
     bmi = round(latest_weight / (height_m ** 2), 2)
 
+    # Phân loại BMI
     if bmi < 18.5:
         status = "Thiếu cân"
         body_type = "Tạng người gầy"
@@ -936,18 +937,24 @@ def health_analysis(request: Request, db: Session = Depends(get_db)):
         status = "Bình thường"
         body_type = "Tạng người cân đối"
         model_file = "/static/models/normal.glb"
+    elif bmi < 30:
+        status = "Thừa cân"
+        body_type = "Tạng người đầy đặn"
+        model_file = "/static/models/overweight.glb"
     else:
-        status = "Thừa cân/Béo phì"
+        status = "Béo phì"
         body_type = "Tạng người đầy đặn"
         model_file = "/static/models/overweight.glb"
 
-    if user.gender.lower() == "nam":
+    # Tính BMR theo công thức Mifflin-St Jeor
+    gender = user.gender.lower()
+
+    if gender in ["nam", "male"]:
         bmr = 10 * latest_weight + 6.25 * user.height - 5 * user.age + 5
     else:
         bmr = 10 * latest_weight + 6.25 * user.height - 5 * user.age - 161
 
-    bmr = round(bmr, 2)
-
+    # Tính TDEE theo mức độ vận động
     activity_map = {
         "Ít vận động": 1.2,
         "Vận động nhẹ": 1.375,
@@ -956,63 +963,92 @@ def health_analysis(request: Request, db: Session = Depends(get_db)):
     }
 
     activity_factor = activity_map.get(user.activity_level, 1.2)
-    tdee = round(bmr * activity_factor, 2)
+    tdee = bmr * activity_factor
 
+    # Xác định mục tiêu dựa trên cân nặng mục tiêu
     goal = "Duy trì"
+
     if user.target_weight and latest_weight:
         if user.target_weight < latest_weight:
             goal = "Giảm cân"
         elif user.target_weight > latest_weight:
             goal = "Tăng cân"
 
+    # Điều chỉnh mục tiêu nếu chưa phù hợp với tình trạng BMI
+    if bmi < 18.5 and goal == "Giảm cân":
+        goal = "Tăng cân"
+
+    if bmi >= 25 and goal == "Tăng cân":
+        goal = "Giảm cân"
+
+    # Tính calo khuyến nghị theo hướng an toàn hơn
     if goal == "Giảm cân":
-        target_calories = round(tdee - 500, 2)
+        # Giảm khoảng 15% so với TDEE
+        target_calories = tdee * 0.85
+
+        # Không khuyến nghị ăn thấp hơn BMR
+        if target_calories < bmr:
+            target_calories = bmr
+
         exercise = [
             "Đi bộ nhanh 30-45 phút/ngày",
             "Chạy bộ nhẹ hoặc đạp xe 3-5 buổi/tuần",
             "Cardio mức vừa",
             "Tập tạ toàn thân 3 buổi/tuần"
         ]
+
         diet = [
-            "Giảm đồ ngọt và đồ chiên",
-            "Ưu tiên cá, thịt nạc, trứng, rau xanh",
-            "Kiểm soát khẩu phần tinh bột",
-            "Ăn đủ protein"
+            "Giảm đồ ngọt, nước ngọt và đồ chiên rán",
+            "Ưu tiên thịt nạc, cá, trứng, đậu và rau xanh",
+            "Kiểm soát khẩu phần tinh bột thay vì cắt bỏ hoàn toàn",
+            "Ăn đủ protein để hạn chế mất cơ khi giảm cân"
         ]
+
     elif goal == "Tăng cân":
-        target_calories = round(tdee + 300, 2)
+        # Tăng khoảng 10% so với TDEE
+        target_calories = tdee * 1.10
+
         exercise = [
-            "Tập gym tăng cơ",
-            "Ưu tiên squat, deadlift, bench press",
-            "Tập 4-5 buổi/tuần",
-            "Ngủ đủ để phục hồi"
+            "Tập gym tăng cơ 3-5 buổi/tuần",
+            "Ưu tiên các bài compound như squat, deadlift, bench press",
+            "Tăng dần mức tạ theo khả năng",
+            "Ngủ đủ để cơ thể phục hồi và phát triển cơ"
         ]
+
         diet = [
-            "Tăng calo từ nguồn tốt",
-            "Ăn thêm bữa phụ",
-            "Ưu tiên protein và carb tốt",
-            "Dùng sữa, yến mạch, trứng, thịt"
+            "Tăng calo từ nguồn thực phẩm lành mạnh",
+            "Ăn thêm 1-2 bữa phụ trong ngày",
+            "Ưu tiên protein, tinh bột tốt và chất béo tốt",
+            "Có thể bổ sung sữa, yến mạch, trứng, thịt, cá, các loại hạt"
         ]
+
     else:
-        target_calories = round(tdee, 2)
+        # Duy trì cân nặng: calo gần bằng TDEE
+        target_calories = tdee
+
         exercise = [
             "Đi bộ hoặc chạy nhẹ 3-4 buổi/tuần",
-            "Tập gym duy trì",
-            "Kết hợp cardio và sức mạnh",
-            "Giữ vận động đều"
+            "Tập gym duy trì sức mạnh",
+            "Kết hợp cardio và bài tập kháng lực",
+            "Duy trì thói quen vận động đều đặn"
         ]
+
         diet = [
-            "Ăn cân bằng các nhóm chất",
-            "Ưu tiên rau xanh và trái cây",
-            "Hạn chế đồ ăn nhanh",
-            "Duy trì lượng calo hợp lý"
+            "Ăn cân bằng giữa tinh bột, protein, chất béo và chất xơ",
+            "Ưu tiên rau xanh, trái cây và thực phẩm ít chế biến",
+            "Hạn chế đồ ăn nhanh, nước ngọt và đồ chiên rán",
+            "Duy trì lượng calo gần với nhu cầu tiêu hao hằng ngày"
         ]
+
+    # Làm tròn kết quả trước khi đưa ra giao diện
+    bmr = round(bmr, 2)
+    tdee = round(tdee, 2)
+    target_calories = round(target_calories, 2)
 
     return templates.TemplateResponse(
         request,
         "health.html",
         {
-            
             "user": user,
             "message": "",
             "bmi": bmi,
@@ -2158,43 +2194,80 @@ async def calculate_health_calculator(
                 "Mục tiêu đã được điều chỉnh sang giảm cân lành mạnh."
             )
 
-    # Tính BMR
+            # Tính BMR theo công thức Mifflin-St Jeor
     if gender == "male":
         bmr = 10 * weight + 6.25 * height - 5 * age + 5
     else:
         bmr = 10 * weight + 6.25 * height - 5 * age - 161
 
-    # Tính TDEE
+    bmr_rounded = round(bmr)
+
+    # Tính TDEE theo mức độ vận động
     activity_factors = {
-        "low": 1.2,
-        "light": 1.375,
-        "moderate": 1.55,
-        "high": 1.725
+        "low": 1.2,        # Ít vận động
+        "light": 1.375,    # Vận động nhẹ
+        "moderate": 1.55,  # Vận động vừa
+        "high": 1.725      # Vận động nhiều
     }
 
     tdee = round(bmr * activity_factors.get(activity_level, 1.2))
 
-    # Tính calo mục tiêu theo mục tiêu cuối cùng
+    # Tính calo khuyến nghị theo hướng khoa học hơn
+    target_note = None
+
     if final_goal == "lose":
-        target_calories = tdee - 500
+        # Giảm cân lành mạnh: tạo thâm hụt khoảng 15% TDEE
+        calorie_deficit = tdee * 0.15
+        target_calories = tdee - calorie_deficit
+
+        # Không khuyến nghị ăn thấp hơn BMR
+        if target_calories < bmr:
+            target_calories = bmr
+            target_note = (
+                "Calo khuyến nghị đã được điều chỉnh để không thấp hơn BMR, "
+                "nhằm đảm bảo nhu cầu năng lượng cơ bản của cơ thể."
+            )
+        else:
+            target_note = (
+                "Calo khuyến nghị được tính bằng cách giảm khoảng 15% so với TDEE, "
+                "phù hợp với mục tiêu giảm cân lành mạnh."
+            )
+
         final_goal_text = "Giảm cân lành mạnh"
+
     elif final_goal == "gain":
-        target_calories = tdee + 300
+        # Tăng cân lành mạnh: tăng khoảng 10% TDEE
+        calorie_surplus = tdee * 0.10
+        target_calories = tdee + calorie_surplus
+
+        target_note = (
+            "Calo khuyến nghị được tính bằng cách tăng khoảng 10% so với TDEE, "
+            "phù hợp với mục tiêu tăng cân lành mạnh."
+        )
+
         final_goal_text = "Tăng cân lành mạnh"
+
     else:
+        # Duy trì cân nặng: ăn gần bằng TDEE
         target_calories = tdee
+
+        target_note = (
+            "Calo khuyến nghị xấp xỉ TDEE, phù hợp với mục tiêu duy trì cân nặng."
+        )
+
         final_goal_text = "Duy trì cân nặng"
 
     result = {
         "bmi": bmi,
         "bmi_status": bmi_status,
-        "bmr": round(bmr),
+        "bmr": bmr_rounded,
         "tdee": tdee,
-        "target_calories": max(round(target_calories), 1200),
+        "target_calories": round(target_calories),
         "goal_text": goal,
         "final_goal": final_goal,
         "final_goal_text": final_goal_text,
-        "warning": warning
+        "warning": warning,
+        "target_note": target_note
     }
 
     return templates.TemplateResponse(
